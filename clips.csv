@@ -59,7 +59,7 @@ S1_r087,S1,March the soldiers past the next hill.,audio/S1_r087.m4a,train,quiet,
 S1_r088,S1,A cup of sugar makes sweet fudge.,audio/S1_r088.m4a,train,quiet,yes,orig id r088; ok assumed - confirm with Data
 S1_r089,S1,Place a rosebush near the porch steps.,audio/S1_r089.m4a,train,quiet,yes,orig id r089; ok assumed - confirm with Data
 S1_r090,S1,Both lost their lives in the raging storm.,audio/S1_r090.m4a,train,quiet,yes,orig id r090; ok assumed - confirm with Data
-S1_t01n,S1,The birch canoe slid on the smooth planks.,audio/S1_t01n.m4a,test,noisy,yes,orig id t01; ok assumed - confirm with Data
-S1_t02n,S1,Glue the sheet to the dark blue background.,audio/S1_t02n.m4a,test,noisy,yes,orig id t02; ok assumed - confirm with Data
-S1_t03n,S1,It's easy to tell the depth of a well.,audio/S1_t03n.m4a,test,noisy,yes,orig id t03; ok assumed - confirm with Data
-S1_t04n,S1,These days a chicken leg is a rare dish.,audio/S1_t04n.m4a,test,noisy,yes,orig id t04; ok assumed - confirm with Data
+S1_t01b,S1,The birch canoe slid on the smooth planks.,audio/S1_t01b.m4a,test,quiet,yes,"second quiet take of S1_t01 (was S1_t01n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t02b,S1,Glue the sheet to the dark blue background.,audio/S1_t02b.m4a,test,quiet,yes,"second quiet take of S1_t02 (was S1_t02n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t03b,S1,It's easy to tell the depth of a well.,audio/S1_t03b.m4a,test,quiet,yes,"second quiet take of S1_t03 (was S1_t03n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t04b,S1,These days a chicken leg is a rare dish.,audio/S1_t04b.m4a,test,quiet,yes,"second quiet take of S1_t04 (was S1_t04n, mislabelled noisy); ok assumed - confirm with Data"
