@@ -101,3 +101,32 @@ Sources for API facts are in `docs/API-NOTES.md`.
   sentence's stream fails before any sound, the whole-clip voice says it instead (real audio, not a stand-in).
 - **R1 on calls:** a per-call stream in the far side's format: `ulaw_8000` media messages to Twilio (not testable
   until the Twilio keys are set) and PCM pieces to a guest's browser on app-to-app calls (tested).
+- **X0 capture runs in the browser, not in a Swift module or VisionCamera.** Both need a native iOS build, and none can
+  be made here (Windows, EAS not logged in), so neither could be spiked. The iPhone runs the web build, so capture uses
+  getUserMedia (front camera, 640x480) and MediaPipe Face Landmarker (tasks-vision 1.2.2, GPU with CPU fallback,
+  `numFaces: 1` so MediaPipe smooths landmarks). It works the same on iPhone Safari, Android and desktop browsers.
+  The library and model load from their pinned CDN files only when a lips screen opens, so the core app's bundle and
+  load time don't change. Landmarks run on the main thread (MediaPipe's own pattern); the 10-minute camera test
+  measures the cost on the phone.
+- **The camera's picture is never shown** (user). The camera plays into a 2 px, near-transparent video element (iOS
+  only decodes frames for an attached, playing video). "Set up the camera" draws an outline of the face box and mouth
+  from landmarks instead of a preview.
+- **TrueDepth and LiDAR are not available to web pages** on iOS Safari (no WebXR depth; the depth-stream draft was
+  discontinued), so lips use the normal front camera only.
+- **The four alignment points come from the phone.** The lip models align mouths from four face points (eyes, nose
+  tip, mouth centre); the browser computes them from the face mesh and sends them in each frame's header, so the
+  server needs no MediaPipe (whose Python package no longer has the API the model code uses with numpy 2).
+- **The face crop is roll-corrected, eyes 50 px apart, mid-eye 50 px from the top of the 160 px crop**, so the
+  models' 96 px mouth patch stays inside the crop. JPEG quality 0.9, grey (R=G=B).
+- **The audio clock uses sample counts on both sides.** The app counts samples sent on each connection, the server
+  counts samples received; `audio_clock` reports pair a count with the device time, and the median fit maps any turn
+  sample to device time. The binary audio frames are unchanged.
+- **The sync check is a 10-second `lips_sync` turn** whose silence endpoint is held off; the offset is the lag that
+  best lines up the audio energy with the mouth opening (±500 ms, correlation ≥ 0.3, 3+ bursts), stored per device
+  (a hash of the browser's user agent) in `<speaker>/lips.json`.
+- **"24 fps for 10 minutes" is checked as**: at least 600 s, at least 99% of whole seconds at 24 or more, no camera
+  stall (a gap over 200 ms), no microphone gap outside voice playback, and the microphone delivering 16 kHz within 2%.
+- **Deploys go from a clean worktree of HEAD** when another session has uncommitted server changes: a deploy of the
+  shared working tree once shipped unfinished code and stopped the server until it was redeployed from HEAD.
+- **A Lips button on Talk** (user request) appears only when the server runs with `LIPS=1`; it opens the separate
+  lips screen. With the flag off, Talk is unchanged.

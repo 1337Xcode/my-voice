@@ -139,3 +139,24 @@ The Experiments card then shows the middle time from the text appearing to the f
 From the computer: `node .work/probes/r1_turns.mjs 3` (P1 recordings through live turns) and the smoke flow `R1`.
 
 ElevenLabs offers zero data retention only on enterprise plans; streamed text is processed like the whole-clip voice.
+
+### X0 lips capture
+
+On the iPhone (Safari, https://trymyvoice.vercel.app): Talk → Lips (or Settings → Experiments) → switch on "Use my
+camera for lip reading" → Set up the camera:
+1. Place the phone 30 to 50 cm away until the outline and the ring turn green.
+2. Line up sound and picture: Start, then say "pa" five times. It shows the offset in ms.
+3. Camera test: Run for 10 minutes (camera, microphone and a phrase every 20 s together). It shows frames a second,
+   seconds at 24 or more, stalls and microphone gaps, and the server stores the result.
+
+All the numbers: `GET /experiments/report?speaker=P1` (`lips_report`). From the computer, with a real speaking face
+(GRID corpus, CC BY 4.0) as the camera: `node .work/pw/lips-check.mjs 1`.
+
+`/ws/lips` frame layout (little-endian, 104-byte header then the JPEG): version u8, flags u8 (bit 0 face visible),
+2 pad bytes, seq u32, device ms f64, face box x y w h (0 to 1) 4×f32, roll yaw pitch (degrees) 3×f32, mouth width,
+outer lip height, inner opening (crop px), mouth aspect, jaw open, brightness 6×f32, keypoints right eye, left eye,
+nose tip, mouth centre (crop px) 8×f32, JPEG length u32.
+
+Deploying while someone else has uncommitted server changes: deploy from a clean worktree of HEAD
+(`git worktree add --detach .work/deploy-tree HEAD`, then `modal deploy main.py` and `modal deploy jobs.py` inside
+`.work/deploy-tree/server`), so unfinished code never ships.
