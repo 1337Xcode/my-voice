@@ -5,15 +5,18 @@ server or on Modal GPUs; "words understood" is 100 minus WER on held-out test se
 
 ## Personal model for S1 (spec 9.3)
 
-His personal models, trained on his 50 training clips; 14 more are kept for testing and never trained on.
-v2 lets training run longer (see "Longer training" below). One `eval_asr` run with the serving decoder:
+His personal models, trained on his 50 training clips; 14 more are kept for testing and never trained on. Accuracy
+(100 - WER), scored with the serving decoder (the one he hears):
 
-| Condition (n clips) | Stock Whisper | v1 (spec defaults) | v2 (active) |
+| Condition (n clips) | Stock Whisper | v1 (active) | v2 |
 | --- | --- | --- | --- |
-| Quiet (10) | 49.4% | 76.5% | 77.8% |
+| Quiet (10) | 48.2% | 79.0% | 77.8% |
 | Real noisy recordings (4) | 22.9% | 65.7% | 68.6% |
-| Babble 5 dB (10) | 22.2% | 61.7% | 56.8% |
-| Babble 0 dB (10) | 0.0% | 24.7% | 30.9% |
+| Babble 5 dB (10) | 19.8% | 61.7% | 56.8% |
+| Babble 0 dB (10) | 0.0% | 25.9% | 33.3% |
+
+v2 (longer training) was first promoted on the CTranslate2 decoder's scores. On the serving decoder it is 1.2 points
+worse in quiet, over the spec's 1-point limit, so v1 is active again. The speak threshold (0.80) was calibrated on v1.
 
 ## App-to-app calls by code
 
