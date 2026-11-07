@@ -15,7 +15,11 @@ const auth = { Authorization: `Bearer ${env.APP_TOKEN}` };
 const started = performance.now();
 const at = () => `${((performance.now() - started) / 1000).toFixed(1)}s`;
 const OPENING_LINE = "Hi, this is a test call from the My Voice speech app. There'll be short pauses.";
-const SENTENCE = "Hello, can you hear me clearly? This is the voice I'll use on calls.";
+// Spoken 7 s and 25 s after the answer, leaving room for the other person to reply between them.
+const SENTENCES = [
+  [7_000, "Hello, can you hear me clearly? This is the voice I'll use on calls."],
+  [25_000, 'Please say something back, and I will read it as captions on my screen.'],
+];
 
 const ws = new WebSocket(`${server.replace('https', 'wss')}/ws?token=${env.APP_TOKEN}`);
 let callId = null;
@@ -43,17 +47,20 @@ ws.onmessage = async (event) => {
   } else if (message.type === 'call_status') {
     console.log(`${at()} call_status ${message.state}${message.detail ? ` (${message.detail})` : ''}`);
     if (message.state === 'connected' && !spokenAt) {
-      setTimeout(() => {
-        spokenAt = performance.now();
-        console.log(`${at()} speaking: "${SENTENCE}"`);
-        ws.send(JSON.stringify({ type: 'type_and_speak', text: SENTENCE }));
-      }, 7000);
+      spokenAt = -1;
+      for (const [delay, text] of SENTENCES) {
+        setTimeout(() => {
+          spokenAt = performance.now();
+          console.log(`${at()} speaking: "${text}"`);
+          ws.send(JSON.stringify({ type: 'type_and_speak', text }));
+        }, delay);
+      }
       setTimeout(() => hangUp('test finished'), Number(holdSeconds) * 1000);
     }
     if (message.state === 'ended' || message.state === 'failed') setTimeout(() => process.exit(0), 1000);
   } else if (message.type === 'partner_caption') {
     console.log(`${at()} caption from them: "${message.text}"`);
-  } else if (message.type === 'audio' && spokenAt) {
+  } else if (message.type === 'audio' && spokenAt > 0) {
     console.log(`${at()} his voice ready ${Math.round(performance.now() - spokenAt)} ms after the request`);
   } else if (message.type === 'error') {
     console.log(`${at()} error ${message.code}: ${message.message}`);
