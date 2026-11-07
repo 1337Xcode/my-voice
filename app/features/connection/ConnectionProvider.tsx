@@ -2,7 +2,7 @@
 import Constants from 'expo-constants';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 
-import { useSettings } from '@/features/settings/SettingsProvider';
+import { helloSettingsOf, useSettings } from '@/features/settings/SettingsProvider';
 import type { ReadyMessage } from './protocol';
 import { ConnectionStatus, SpeechSocket } from './SpeechSocket';
 
@@ -18,8 +18,8 @@ const ConnectionContext = createContext<ConnectionValue>({ socket: null, status:
 
 export const clientVersion = Constants.expoConfig?.version ?? '0.0.0';
 
-/** Owns the socket's lifetime; one per app. */
-export function ConnectionProvider({ children }: { children: ReactNode }) {
+/** Owns the socket's lifetime; one per app. Disabled on the guest call page, which has no app token. */
+export function ConnectionProvider({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
   const { settings, loaded } = useSettings();
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
@@ -27,7 +27,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
   const { serverUrl, token, speaker } = settings.dev;
 
   useEffect(() => {
-    if (!loaded) return;
+    if (!loaded || !enabled) return;
     const socket = new SpeechSocket({
       serverUrl,
       token,
@@ -35,13 +35,13 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
         type: 'hello',
         speaker: settingsRef.current.dev.speaker,
         client_version: clientVersion,
-        settings: { before_speaking: settingsRef.current.beforeSpeaking, ...settingsRef.current.dev, token: undefined },
+        settings: helloSettingsOf(settingsRef.current),
       }),
     });
     setValue({ socket, status: socket.status, ready: null, lastError: null });
     const offStatus = socket.onStatus((status) => setValue((v) => ({ ...v, status, ready: socket.ready })));
     const offMessage = socket.onMessage((message) => {
-      if (message.type === 'error') setValue((v) => ({ ...v, lastError: String(message.message ?? '') }));
+      if (message.type === 'error') setValue((v) => ({ ...v, lastError: message.message }));
       if (message.type === 'ready') setValue((v) => ({ ...v, ready: socket.ready, lastError: null }));
     });
     socket.start();
@@ -50,7 +50,7 @@ export function ConnectionProvider({ children }: { children: ReactNode }) {
       offMessage();
       socket.stop();
     };
-  }, [loaded, serverUrl, token, speaker]);
+  }, [loaded, enabled, serverUrl, token, speaker]);
 
   return <ConnectionContext.Provider value={value}>{children}</ConnectionContext.Provider>;
 }

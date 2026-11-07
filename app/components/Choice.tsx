@@ -1,11 +1,9 @@
 /** A row of large options where exactly one is selected; selection is shown by fill and a check, not colour alone. */
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
+import { Check } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { colors, radius, space, target } from '@/theme';
-
-const checkmark = { ios: 'checkmark', android: 'check', web: 'check' } as SymbolViewProps['name'];
+import { colors, pill, space, target } from '@/theme';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -25,7 +23,7 @@ export function Choice<T extends string>({ label, options, value, onChange }: Pr
               accessibilityState={{ selected }}
               onPress={() => onChange(option.value)}
               style={({ pressed }) => [styles.option, selected && styles.selected, pressed && styles.pressed]}>
-              {selected ? <SymbolView name={checkmark} tintColor={colors.accentText} size={18} /> : null}
+              {selected ? <Check size={18} color={colors.inkText} strokeWidth={2.5} /> : null}
               <AppText variant="label" tone={selected ? 'inverse' : 'default'}>
                 {option.label}
               </AppText>
@@ -38,9 +36,9 @@ export function Choice<T extends string>({ label, options, value, onChange }: Pr
 }
 
 const styles = StyleSheet.create({
-  group: { gap: space.sm },
+  group: { gap: space.md },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  option: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: target.min, paddingHorizontal: space.lg, justifyContent: 'center', borderRadius: radius, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
-  selected: { backgroundColor: colors.accent, borderColor: colors.accent },
-  pressed: { opacity: 0.7 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: target.min, paddingHorizontal: space.lg, justifyContent: 'center', borderRadius: pill, backgroundColor: colors.tint },
+  selected: { backgroundColor: colors.ink },
+  pressed: { opacity: 0.75 },
 });

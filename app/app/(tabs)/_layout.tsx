@@ -1,48 +1,25 @@
-/** The four tabs: Talk, Phrases, Teach, Calls (spec 11.2). Settings opens from the gear on Talk. */
-import { Link, Tabs } from 'expo-router';
-import { SymbolView, SymbolViewProps } from 'expo-symbols';
-import { ColorValue, Pressable, StyleSheet } from 'react-native';
+/** The four tabs: Talk, Phrases, Teach, Calls (spec 11.2), on a pill tab bar. Settings opens from the gear on Talk. */
+import { Tabs } from 'expo-router';
 
-import { colors, fonts, target } from '@/theme';
-
-type SymbolName = SymbolViewProps['name'];
-
-/** A tab icon from SF Symbols on iOS and Material Symbols elsewhere. */
-function tabIcon(ios: string, other: string) {
-  const name = { ios, android: other, web: other } as SymbolName;
-  return ({ color }: { color: ColorValue }) => <SymbolView name={name} tintColor={color} size={26} />;
-}
-
-function SettingsButton() {
-  return (
-    <Link href="/settings" asChild>
-      <Pressable accessibilityRole="button" accessibilityLabel="Settings" hitSlop={8} style={styles.gear}>
-        <SymbolView name={{ ios: 'gearshape', android: 'settings', web: 'settings' } as SymbolName} tintColor={colors.text} size={26} />
-      </Pressable>
-    </Link>
-  );
-}
+import { PillTabBar } from '@/features/navigation/PillTabBar';
+import { colors, fonts } from '@/theme';
 
 export default function TabLayout() {
   return (
     <Tabs
+      tabBar={(props) => <PillTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: colors.accent,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 13 },
-        tabBarStyle: { backgroundColor: colors.background, borderTopColor: colors.border },
         headerStyle: { backgroundColor: colors.background },
-        headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 20 },
+        headerTitleStyle: { fontFamily: fonts.semibold, fontSize: 22, color: colors.text },
+        headerTitleAlign: 'left',
+        headerTitleContainerStyle: { paddingLeft: 8 },
         headerShadowVisible: false,
+        sceneStyle: { backgroundColor: colors.background },
       }}>
-      <Tabs.Screen name="index" options={{ title: 'Talk', tabBarIcon: tabIcon('waveform', 'graphic_eq'), headerRight: SettingsButton }} />
-      <Tabs.Screen name="phrases" options={{ title: 'Phrases', tabBarIcon: tabIcon('text.bubble', 'chat') }} />
-      <Tabs.Screen name="teach" options={{ title: 'Teach', tabBarIcon: tabIcon('graduationcap', 'school') }} />
-      <Tabs.Screen name="calls" options={{ title: 'Calls', tabBarIcon: tabIcon('phone', 'call') }} />
+      <Tabs.Screen name="index" options={{ title: 'Talk', headerShown: false }} />
+      <Tabs.Screen name="phrases" options={{ title: 'Phrases' }} />
+      <Tabs.Screen name="teach" options={{ title: 'Teach' }} />
+      <Tabs.Screen name="calls" options={{ title: 'Calls' }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  gear: { minWidth: target.min, minHeight: target.min, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
-});

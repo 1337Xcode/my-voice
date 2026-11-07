@@ -6,14 +6,14 @@ import { useConnection } from '@/features/connection/ConnectionProvider';
 import { colors, space } from '@/theme';
 
 const statusText = {
-  unconfigured: 'Server not set: add it in the developer panel',
+  unconfigured: 'Server not set',
   connecting: 'Connecting',
   waking: 'Waking up the speech server',
-  offline: 'No connection: phrases and typing still work',
-  unauthorised: 'The app token is wrong: check the developer panel',
+  offline: 'Offline',
+  unauthorised: 'App token is wrong',
 } as const;
 
-/** Shows readiness with a dot whose meaning is also written out, never colour alone. */
+/** Readiness as words beside a dot (filled when ready, hollow otherwise), never colour alone. */
 export function ConnectionBadge() {
   const { status, ready } = useConnection();
   const isReady = status === 'ready' && ready;
@@ -21,8 +21,8 @@ export function ConnectionBadge() {
   const busy = status === 'connecting' || status === 'waking';
   return (
     <View style={styles.row} accessibilityRole="text" accessibilityLabel={`Speech server: ${label}`} accessibilityLiveRegion="polite">
-      {busy ? <ActivityIndicator size="small" color={colors.muted} /> : <View style={[styles.dot, { backgroundColor: isReady ? colors.accent : colors.danger }]} />}
-      <AppText variant="caption" tone="muted" testID="connection-status">
+      {busy ? <ActivityIndicator size="small" color={colors.muted} /> : <View style={[styles.dot, isReady ? styles.filled : styles.hollow]} />}
+      <AppText variant="caption" tone="muted" testID="connection-status" numberOfLines={1} unscaled style={styles.label}>
         {label}
       </AppText>
     </View>
@@ -30,6 +30,9 @@ export function ConnectionBadge() {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 24 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
+  row: { flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: space.sm, minHeight: 24 },
+  label: { flexShrink: 1 },
+  dot: { width: 9, height: 9, borderRadius: 5 },
+  filled: { backgroundColor: colors.text },
+  hollow: { borderWidth: 1.5, borderColor: colors.muted },
 });

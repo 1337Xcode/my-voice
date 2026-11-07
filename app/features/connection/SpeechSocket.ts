@@ -1,5 +1,5 @@
 /** The app's single WebSocket to the speech server: connects, says hello, reconnects with backoff. */
-import { ClientMessage, isServerMessage, ReadyMessage, ServerMessage } from './protocol';
+import { ClientMessage, parseServerMessage, ReadyMessage, ServerMessage } from './protocol';
 
 export type ConnectionStatus = 'unconfigured' | 'connecting' | 'waking' | 'ready' | 'offline' | 'unauthorised';
 
@@ -16,6 +16,8 @@ const PING_INTERVAL_MS = 15_000;
 // After this long without `ready`, the server is probably cold-starting; say so.
 const WAKING_AFTER_MS = 1_500;
 const BACKOFF_MS = [1_000, 2_000, 4_000, 8_000, 15_000];
+// A connection not ready by now is treated as lost and retried (a cold start takes about 5 s).
+const READY_TIMEOUT_MS = 20_000;
 // The server closes with this code when the token is wrong; retrying would not help.
 const UNAUTHORISED_CLOSE_CODE = 4401;
 
@@ -92,7 +94,8 @@ export class SpeechSocket {
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
     const waking = setTimeout(() => this.status !== 'ready' && this.setStatus('waking'), WAKING_AFTER_MS);
-    this.timers.push(waking);
+    const giveUp = setTimeout(() => this.status !== 'ready' && ws.close(), READY_TIMEOUT_MS);
+    this.timers.push(waking, giveUp);
 
     ws.onopen = () => ws.send(JSON.stringify(this.options.hello()));
     ws.onmessage = (event) => this.receive(event.data);
@@ -102,20 +105,21 @@ export class SpeechSocket {
 
   private receive(data: unknown): void {
     if (typeof data !== 'string') return;
-    let parsed: unknown;
+    let raw: unknown;
     try {
-      parsed = JSON.parse(data);
+      raw = JSON.parse(data);
     } catch {
       return;
     }
-    if (!isServerMessage(parsed)) return;
-    if (parsed.type === 'ready') {
-      this.ready = parsed as ReadyMessage;
+    const message = parseServerMessage(raw);
+    if (!message) return;
+    if (message.type === 'ready') {
+      this.ready = message;
       this.attempt = 0;
       this.setStatus('ready');
       this.startPing();
     }
-    this.listeners.forEach((listener) => listener(parsed as ServerMessage));
+    this.listeners.forEach((listener) => listener(message));
   }
 
   private closed(code: number): void {

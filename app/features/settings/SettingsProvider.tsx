@@ -10,6 +10,16 @@ export type BeforeSpeaking = 'speak' | 'check';
 export type Settings = {
   textSize: TextSize;
   beforeSpeaking: BeforeSpeaking;
+  /** His chosen ElevenLabs voice; null until he picks one (the server's default is used). */
+  voiceId: string | null;
+  /** The chosen microphone; null for the system default. */
+  micDeviceId: string | null;
+  /** AAA text contrast (spec 11.10). */
+  highContrast: boolean;
+  /** Motion off even when the system allows it (spec 11.10). */
+  reduceMotion: boolean;
+  /** How fast his voice speaks, 0.7 to 1.2 (server side). */
+  speechRate: number;
   dev: {
     serverUrl: string;
     token: string;
@@ -26,16 +36,39 @@ const STORAGE_KEY = 'settings.v1';
 export const defaultSettings: Settings = {
   textSize: 'large',
   beforeSpeaking: 'speak',
+  voiceId: null,
+  micDeviceId: null,
+  highContrast: false,
+  reduceMotion: false,
+  speechRate: 1,
   dev: {
     serverUrl: process.env.EXPO_PUBLIC_SERVER_URL ?? '',
     token: process.env.EXPO_PUBLIC_APP_TOKEN ?? '',
-    speaker: 'P1',
+    // The public build is his (S1); local development defaults to the developer's test voice (P1).
+    speaker: process.env.EXPO_PUBLIC_DEFAULT_SPEAKER === 'S1' ? 'S1' : 'P1',
     speakThreshold: 0.85,
     pickThreshold: 0.55,
     endpointSilenceMs: 900,
     partials: false,
   },
 };
+
+/** The pipeline settings the server keeps (spec 12.2 `POST /settings`), with its field names. */
+export function serverSettingsOf(settings: Settings) {
+  return {
+    voice_id: settings.voiceId ?? undefined,
+    before_speaking: settings.beforeSpeaking,
+    speech_rate: settings.speechRate,
+    speak_threshold: settings.dev.speakThreshold,
+    pick_threshold: settings.dev.pickThreshold,
+    endpoint_silence_ms: settings.dev.endpointSilenceMs,
+  };
+}
+
+/** What `hello` carries: only his own choices, never thresholds, which the server's calibration owns. */
+export function helloSettingsOf(settings: Settings) {
+  return { voice_id: settings.voiceId ?? undefined, before_speaking: settings.beforeSpeaking };
+}
 
 type SettingsContextValue = {
   settings: Settings;
