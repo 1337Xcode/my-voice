@@ -77,7 +77,7 @@ def build_request(static_block: str, memory_pairs: list[dict], conversation: lis
     return {
         "model": MODEL,
         "max_tokens": 400,
-        "system": [{"type": "text", "text": f"{RULES}\n\n{static_block}", "cache_control": {"type": "ephemeral"}}],
+        "system": [{"type": "text", "text": f"{RULES}\n\n{static_block}", "cache_control": {"type": "ephemeral", "ttl": "1h"}}],
         "messages": [{"role": "user", "content": json.dumps(turn, ensure_ascii=False)}],
         # Low effort and no thinking keep Haiku inside the 1.2 s budget; one fixed setting keeps the cache valid.
         "thinking": {"type": "disabled"},

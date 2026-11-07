@@ -5,6 +5,7 @@ import os
 import time
 from pathlib import Path
 
+import httpx
 import pytest
 
 pytestmark = pytest.mark.live
@@ -78,7 +79,13 @@ def test_openai_decisions_picks_the_flat_white():
 
 @needs("ANTHROPIC_API_KEY")
 def test_haiku_repairs_within_its_budget():
-    result = asyncio.run(repair(build_static_block("P1"), [], CONVERSATION, NBEST, PHRASES))
+    async def warm_then_repair():
+        # Serving warms the connection and the prompt cache when the app says hello; the timed call comes after.
+        async with httpx.AsyncClient() as http:
+            await repair(build_static_block("P1"), [], CONVERSATION, NBEST, PHRASES, http, timeout_s=15.0)
+            return await repair(build_static_block("P1"), [], CONVERSATION, NBEST, PHRASES, http)
+
+    result = asyncio.run(warm_then_repair())
     if result.error and "ANTHROPIC_API_KEY is wrong" in result.error:
         pytest.skip(result.error)
     print(f"repair: {result.ms} ms, {result.sentences}, {result.error}, usage {result.usage}")

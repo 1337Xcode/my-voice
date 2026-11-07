@@ -141,11 +141,14 @@ class Runtime:
 
     async def warm_connections(self) -> None:
         """Opens keep-alive connections to the gate and voice services, so his first turn doesn't pay TLS set-up (~1 s)."""
-        for url, header in (("https://api.typesafe.ai/v1/models", "TYPESAFE_API_KEY"), ("https://api.elevenlabs.io/v1/models", "ELEVENLABS_API_KEY")):
+        services = (("https://api.typesafe.ai/v1/models", "TYPESAFE_API_KEY"), ("https://api.elevenlabs.io/v1/models", "ELEVENLABS_API_KEY"),
+                    ("https://api.anthropic.com/v1/models", "ANTHROPIC_API_KEY"))
+        for url, header in services:
             key = os.environ.get(header, "")
             if not key:
                 continue
-            headers = {"Authorization": f"Bearer {key}"} if header.startswith("TYPESAFE") else {"xi-api-key": key}
+            headers = {"TYPESAFE_API_KEY": {"Authorization": f"Bearer {key}"}, "ELEVENLABS_API_KEY": {"xi-api-key": key},
+                       "ANTHROPIC_API_KEY": {"x-api-key": key, "anthropic-version": "2023-06-01"}}[header]
             try:
                 await self.client().get(url, headers=headers, timeout=5.0)
             except httpx.HTTPError as error:
