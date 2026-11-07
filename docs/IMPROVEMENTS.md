@@ -60,13 +60,13 @@ these", instead of free-form generation.
 cache lasts an hour. **Measured:** a cold first Jev call took over 1.5 s (its timeout); warm calls 140–390 ms. Haiku
 repair: first call over 1.2 s, then 735–860 ms.
 
-## CTranslate2 decoder
+## CTranslate2 decoder (parked)
 
 **What:** Whisper decoding through CTranslate2 (float16) instead of transformers. **Measured on P1 (A10G, 10 clips per
-condition):** 140 ms per clip instead of 706 ms (5 beams). Quiet WER identical; babble differs by one word on 10 clips,
-in near-ties that flip both ways. It also fixes a real defect: transformers 5.22 returns the same top hypothesis five
-times for Whisper n-best, so the gate and repair only ever saw one guess. CTranslate2 returns 4–5 distinct ones.
-His models are re-scored with the new decoder so promotion is judged exactly as he is heard.
+condition):** 140 ms per clip instead of 706 ms (5 beams), and 4-5 distinct n-best guesses where transformers 5.22
+returns the same one five times. **Not live:** with it, S1 v1 scored 2.5 points lower in quiet (76.5% vs 79.0%), and
+its first serving deploy failed to start. Serving and scoring both use transformers; the plan to switch is in
+DECISIONS.
 
 ## Phone captions
 
@@ -199,8 +199,8 @@ teammate's S1 adapter (it was trained on all 50 training clips, so cross-validat
 | Babble 0 dB (10) | 0.0% | 24.7% | 30.9% |
 | Mean WER | 84.1 | 42.8 | 41.5 |
 
-v2 was promoted (mean WER 40.9 vs 42.8 in its scoring run; quiet better) and is active. The test set is 34 clips, so v2's
-lead over v1 on test is within a few words and is not by itself evidence; the evidence for the change is the
-cross-validation above. Training time for 45 clips went from 82 s (v1, 15 epochs) to 132 s (v2, 25 epochs); the trainer's
-240 s budget still bounds a large set. The stock and v1 numbers in the table at the top of this file came from an earlier
-8-beam decode; the ones here supersede them.
+v2 was first promoted on these scores. Re-scored with the serving decoder (the table at the top of this file), it is
+1.2 points worse than v1 in quiet, over the 1-point limit, so v1 is active. The test set is 34 clips, so v2's lead
+on babble is within a few words; the evidence for patience 5 is the cross-validation above. Training time for 45
+clips went from 82 s (v1, 15 epochs) to 132 s (v2, 25 epochs); the trainer's 240 s budget still bounds a large set.
+The "real noisy" clips were later relabelled by the data team as quiet retakes.
