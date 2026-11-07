@@ -69,3 +69,80 @@ His models are re-scored with the new decoder so promotion is judged exactly as 
 **What:** on a real call the other person's speech arrived as one 30-second segment (line noise kept resetting the
 pause). Captions now need two speech windows in a row to count as speech, cut long lines at a 300 ms pause, caption
 the last line when the call ends, and log why a caption was dropped (never the words).
+
+## Speech enhancement (spec 18: kept only if his error drops)
+
+**Question:** does cleaning the microphone audio before Whisper lower his word error, especially with people talking nearby?
+**Answer: no. No enhancer is adopted; Whisper hears the raw audio.** Every denoiser tried made the personal model's error
+higher, most of them much higher, in quiet and in babble. Seen from the numbers: his consonant cues are what these models
+remove or smear, and the remaining babble then triggers extra words.
+
+**Method.** Each enhancer cleans every frozen test clip, then the stock model and the speaker's active personal adapter decode
+it exactly as serving does (A10G, beam search). WER is `voice.evaluation.wer` (spec 15.2), corpus WER per condition; "mean WER" is
+the mean over the frozen conditions, as the registry computes it. P1 uses `p1-whisper-lora-v2`, S1 uses `s1-whisper-lora-v1`.
+Test clips: quiet 10 (about 80 reference words, so one word is about 1.3 points), real noisy 4 (S1 only; P1 has none), babble 5 dB 10,
+babble 0 dB 10. The "pooled" columns add 3 extra babble draws (new seeds) of the same 10 sentences, so 40 clips per cell; the draws
+share sentences, so they reduce babble-mixing noise, not sentence noise. Repeating the stock decode gave identical text on both
+speakers, so each cell was run once. Run: `cd server && modal run scripts_enhance_eval.py::evaluate --speaker P1` (then `S1`);
+timing with `::latency`; an implementation check (SI-SDR against the clean clip) with `::sanity`.
+
+**Candidates** (all in `server/voice/audio/enhance.py`, `load_enhancer(name, device)`; all installed and ran): an 80 Hz causal
+high-pass; loudness normalisation to -23 LUFS; both together; `noisereduce` 3.0.3 spectral gating (its torch implementation on the GPU,
+stationary and non-stationary); DeepFilterNet 3 (`deepfilternet` 0.5.6) and a "soft" variant that may remove at most 12 dB;
+SpeechBrain MetricGAN+ (`speechbrain/metricgan-plus-voicebank`); SpeechBrain SepFormer WHAM! 16 kHz enhancement.
+
+**Personal model, WER % (lower is better), P1:**
+
+| enhancer | ms per 6 s | quiet | babble 5db | babble 0db | mean WER | babble 5 dB pooled | babble 0 dB pooled | stock mean |
+|---|---|---|---|---|---|---|---|---|
+| none | 0 | 7.6 | 22.8 | 57.0 | **29.1** | 23.4 | 56.3 | 39.2 |
+| highpass | 0.8 | 8.9 | 25.3 | 62.0 | **32.1** | 24.7 | 59.2 | 40.1 |
+| loudnorm | 2.6 | 7.6 | 21.5 | 55.7 | **28.3** | 24.0 | 55.7 | 41.4 |
+| highpass_loudnorm | 3.4 | 7.6 | 22.8 | 62.0 | **30.8** | 23.7 | 59.2 | 39.7 |
+| noisereduce_stationary | 4.5 | 12.7 | 44.3 | 79.8 | **45.6** | 38.3 | 79.8 | 52.3 |
+| noisereduce_nonstationary | 4.7 | 16.5 | 38.0 | 119.0 | **57.8** | 45.3 | 92.4 | 64.6 |
+| deepfilternet3 | 43 | 11.4 | 68.3 | 119.0 | **66.2** | 82.0 | 111.4 | 70.9 |
+| deepfilternet3_soft | 44 | 6.3 | 27.9 | 70.9 | **35.0** | 29.4 | 63.9 | 58.2 |
+| metricgan_plus | 12.9 | 12.7 | 67.1 | 98.7 | **59.5** | 58.5 | 97.8 | 78.5 |
+| sepformer_wham16k | 193 | 44.3 | 120.2 | 131.7 | **98.7** | 118.0 | 126.3 | 95.8 |
+**Personal model, WER %, S1** (noisy real = 4 clips):
+
+| enhancer | ms per 6 s | quiet | noisy real | babble 5db | babble 0db | mean WER | babble 5 dB pooled | babble 0 dB pooled | stock mean |
+|---|---|---|---|---|---|---|---|---|---|
+| none | 0 | 21.0 | 34.3 | 38.3 | 75.3 | **42.2** | 44.1 | 70.1 | 80.1 |
+| highpass | 0.8 | 22.2 | 22.9 | 37.0 | 76.5 | **39.7** | 42.3 | 70.7 | 80.1 |
+| loudnorm | 2.6 | 21.0 | 34.3 | 38.3 | 72.8 | **41.6** | 43.8 | 69.1 | 79.2 |
+| highpass_loudnorm | 3.4 | 23.5 | 22.9 | 37.0 | 75.3 | **39.7** | 43.2 | 70.4 | 79.7 |
+| noisereduce_stationary | 4.5 | 30.9 | 34.3 | 59.3 | 84.0 | **52.1** | 60.2 | 85.5 | 85.4 |
+| noisereduce_nonstationary | 4.7 | 29.6 | 51.4 | 66.7 | 106.2 | **63.5** | 69.8 | 101.5 | 87.3 |
+| deepfilternet3 | 43 | 29.6 | 28.6 | 104.9 | 119.8 | **70.7** | 104.6 | 127.5 | 96.1 |
+| deepfilternet3_soft | 44 | 24.7 | 17.1 | 50.6 | 91.4 | **46.0** | 56.5 | 84.0 | 83.9 |
+| metricgan_plus | 12.9 | 50.6 | 40.0 | 95.1 | 123.5 | **77.3** | 97.5 | 123.2 | 110.3 |
+| sepformer_wham16k | 193 | 50.6 | 74.3 | 148.2 | 164.2 | **109.3** | 131.2 | 149.4 | 130.2 |
+Latency is the median of 20 runs on 6 s of speech, A10G, GPU warm (`::latency`). Real time is met by everything except SepFormer (193 ms, fp32;
+target 60 ms); DeepFilterNet 3 is 43 ms including resampling 16 to 48 kHz and back.
+
+**Verdict by the rule** (lower mean WER, quiet WER up by no more than 1 point, personal model):
+- DeepFilterNet 3, MetricGAN+, SepFormer, both `noisereduce` modes: fail. Quiet error rises 4 to 37 points (P1; 9 to 30 for S1) and babble error rises
+  with it (P1 mean 29.1 to 45.6-98.7). They hurt the stock model as well (P1 mean 39.2 to 78.5 and 95.8 for MetricGAN+ and SepFormer).
+- High-pass (and high-pass plus loudness): fail. S1 mean falls 42.2 to 39.7, but only through the 4 real noisy clips (34.3 to 22.9, four words), while
+  quiet rises 1.2 points (2.5 with loudness) and pooled babble does not move (70.1 to 70.7 at 0 dB). On P1 the mean rises 29.1 to 32.1 (quiet +1.3).
+- DeepFilterNet 3 soft: fail. Quiet P1 improves one word (7.6 to 6.3) and S1 real noisy 34.3 to 17.1, but babble gets worse (P1 pooled 0 dB 56.3 to 63.9, S1 70.1 to 84.0) and
+  the means rise (29.1 to 35.0; 42.2 to 46.0).
+- Loudness normalisation alone: passes the letter of the rule (mean 29.1 to 28.3, 42.2 to 41.6, quiet unchanged) but not the
+  spirit: the gain is under one word, the pooled babble cells move both ways (P1 5 dB 23.4 to 24.0), and Whisper's log-mel features
+  are close to loudness-invariant. Not adopted; it is harmless if a live microphone ever proves too quiet.
+
+**Implementation check.** Against the clean clip (SI-SDR, dB) only DeepFilterNet 3 raises quality on white noise at 10 dB
+(10.0 to 11.5, soft 13.2); on babble none does (5 dB: 5.0 to 4.2 at best). Babble is speech, so enhancers meant for noise keep
+it or damage the target voice; this is why gating cannot help the case that matters here.
+
+**Caveats.** Small test sets (the quiet cell is 10 sentences); S1's real noisy cell is 4 clips, and it is the only place where a
+front end helped. Worth re-measuring when 20 or more real noisy clips exist (`noisy_real` is built from team `t01n` clips). Krisp and
+Hush (spec 18) are not covered. Build notes for anyone re-running: `deepfilterlib` has no Python 3.12 wheel so the image builds it from
+source with Rust and needs `git` (DeepFilterNet's logger calls it); there is no torchaudio for torch 2.15, so SpeechBrain runs on
+torchaudio 2.11 installed without dependencies; DeepFilterNet needs a shim for a removed torchaudio module (`install_torchaudio_shim`).
+
+**If an enhancer is ever adopted:** apply it in `voice/turns/turn.py` on the captured turn audio, once, before the recogniser and the
+phrase matcher (both then see the same audio), behind a per-speaker setting, and only for the model it was measured with.
+Image additions: the `apt` and `pip` lines of `enhance_image` in `scripts_enhance_eval.py`.
