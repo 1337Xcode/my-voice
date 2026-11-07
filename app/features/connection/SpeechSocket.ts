@@ -31,6 +31,8 @@ export class SpeechSocket {
   private stopped = false;
   status: ConnectionStatus = 'connecting';
   ready: ReadyMessage | null = null;
+  /** 16-bit samples sent on this connection; the lips experiment maps audio to the device clock with it. */
+  audioSamplesSent = 0;
 
   constructor(private options: SocketOptions) {}
 
@@ -64,6 +66,7 @@ export class SpeechSocket {
   sendAudio(frame: ArrayBuffer): boolean {
     if (this.ws?.readyState !== WebSocket.OPEN) return false;
     this.ws.send(frame);
+    this.audioSamplesSent += frame.byteLength >> 1;
     return true;
   }
 
@@ -93,6 +96,7 @@ export class SpeechSocket {
     const ws = new WebSocket(url);
     ws.binaryType = 'arraybuffer';
     this.ws = ws;
+    this.audioSamplesSent = 0;
     const waking = setTimeout(() => this.status !== 'ready' && this.setStatus('waking'), WAKING_AFTER_MS);
     const giveUp = setTimeout(() => this.status !== 'ready' && ws.close(), READY_TIMEOUT_MS);
     this.timers.push(waking, giveUp);

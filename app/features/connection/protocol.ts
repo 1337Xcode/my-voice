@@ -48,7 +48,8 @@ const serverMessage = z.discriminatedUnion('type', [
   z.object({ type: z.literal('partner_caption'), text: z.string(), source: z.string().optional(), partial: z.boolean().optional(), segment_id: z.string().optional() }),
   // Experiments (EXP-SPEC 9.2): streamed voice chunks, and lips setup and status.
   z.object({ type: z.literal('audio_chunk'), turn_id: z.string(), seq: z.number(), format: z.string(), sample_rate: z.number(), data: z.string(), final: z.boolean() }),
-  z.object({ type: z.literal('experiments'), realtime_voice: z.boolean(), lips: z.boolean().optional(), session_id: z.string().optional() }),
+  z.object({ type: z.literal('experiments'), realtime_voice: z.boolean() }),
+  z.object({ type: z.literal('lips_mode'), on: z.boolean(), session_id: z.string().nullable().optional(), reason: z.string().nullable().optional() }),
   z.object({ type: z.literal('lips_setup'), step: z.string(), ok: z.boolean(), reason: z.string().nullable().optional(), offset_ms: z.number().nullable().optional(), thresholds: z.record(z.string(), z.number()).nullable().optional() }),
   z.object({ type: z.literal('lips_turn'), turn_id: z.string(), who: z.enum(['him', 'other', 'unknown']), lip_active_ratio: z.number().nullable().optional(), face_visible_pct: z.number().nullable().optional(), endpoint: z.string().nullable().optional() }),
   z.object({ type: z.literal('incoming_call'), call_id: z.string(), name: z.string().nullable().optional(), kind: z.string().optional() }),
