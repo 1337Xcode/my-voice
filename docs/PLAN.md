@@ -15,28 +15,28 @@ Modules for later phases may be built ahead in parallel worktrees; they are acce
 - [ ] Running on the iPhone (EAS development build) — waiting on Expo login + Apple developer account (RUNBOOK)
 
 ## Phase 1: Core loop
-- [ ] Server: Silero VAD endpointing (Done tap, silence 500 to 2000 ms, 250 ms minimum speech, 30 s cap)
-- [ ] Server: Whisper large-v3-turbo n-best (beam 5, 5 best, length-normalised log-prob), hallucination guards
-- [ ] Server: stand-in decision returns `pick` with top 3; `choose` speaks the chosen text
-- [ ] Server: ElevenLabs Flash v2.5 TTS, cache by (voice, format, text), phrase pre-synthesis, `/tts/{file}`
-- [ ] Server: turn records with every stage timestamp in `turns.jsonl`; `client_timing`
-- [ ] App: design system (Geist, lucide, Moti), Talk states Idle/Listening/Thinking/Pick one/Speaking/Ignored/Offline
-- [ ] App: capture 16 kHz PCM via @siteed/audio-studio, 100 ms frames over the WebSocket, live level, half duplex
-- [ ] App: phrase one-tap online and offline from cached audio (< 0.3 s), typed text via expo-speech offline
+- [x] Server: Silero VAD endpointing (Done tap, silence 500 to 2000 ms, 250 ms minimum speech, 30 s cap)
+- [x] Server: Whisper large-v3-turbo n-best (beam 5, 5 best, length-normalised log-prob), hallucination guards
+- [x] Server: stand-in decision (replaced by the gate in P3); `choose` speaks the chosen text
+- [x] Server: ElevenLabs Flash v2.5 TTS, cache by (voice, format, text), phrase pre-synthesis, `/tts/{file}`
+- [x] Server: turn records with every stage timestamp in `turns.jsonl`; `client_timing`
+- [x] App: design system (Geist, lucide, Moti), Talk states Idle/Listening/Thinking/Pick one/Speaking/Ignored/Offline
+- [x] App: capture 16 kHz PCM via @siteed/audio-studio, 100 ms frames over the WebSocket, live level, half duplex
+- [x] App: phrase one-tap online and offline from cached audio (< 0.3 s), typed text via expo-speech offline
 - [ ] Check: P1 speaks a sentence → up to 3 options → tapped one is spoken; timings logged; offline phrase < 0.3 s
 
 ## Phase 2: Personalise
-- [ ] `/clips` upload, conversion to 16 kHz wav, clip records (team CSV columns + ours)
+- [x] `/clips` upload, conversion to 16 kHz wav, clip records (team CSV columns + ours)
 - [ ] Onboarding (consent, voice, phrases, test sentences ta01-ta10, phrase recordings, make my model)
-- [ ] Phrase matcher: WavLM-base-plus layer features, banded DTW, leave-one-out layer choice, reject threshold
-- [ ] Babble bank (LibriSpeech dev-clean), Harvard lists in `_shared/prompts/`
-- [ ] Trainer: LoRA r32/α64 on q/k/v/out, augmentation, early stopping, eval per condition, promote rule, hot swap
-- [ ] `import_team` (reads `speech-data/<SPK>/clips.csv` + team audio), `register_adapter` (e.g. `p1-test`)
+- [x] Phrase matcher: WavLM-base-plus layer features, banded DTW, leave-one-out layer choice, reject threshold
+- [x] Babble bank (LibriSpeech dev-clean), Harvard lists in `_shared/prompts/`
+- [x] Trainer: LoRA r32/α64 on q/k/v/out, augmentation, early stopping, eval per condition, promote rule, hot swap
+- [x] `import_team` (reads `speech-data/<SPK>/clips.csv` + team audio), `register_adapter` (e.g. `p1-test`)
 - [ ] Check: P1 phrase leave-one-out accuracy reported; v1 trains, evaluates, promoted or rejected; app updates live
 
 ## Phase 3: Gate and learning
-- [ ] Candidate set, Decisions round 1 (Jev via TypeSafe AI; gpt-6-luna option), Haiku repair in parallel, round 2
-- [ ] Actions speak/pick/again, Check-first mode, correction memory, Learned note, Review list
+- [x] Candidate set, Decisions round 1 (Jev via TypeSafe AI; gpt-6-luna option), Haiku repair in parallel, round 2
+- [x] Actions speak/pick/again, Check-first mode, correction memory, Learned note, Review list
 - [ ] Check: misheard sentence → Pick → he picks → saying it again yields it via memory; Review approval makes clips trainable
 
 ## Phase 4: Results
@@ -44,18 +44,29 @@ Modules for later phases may be built ahead in parallel worktrees; they are acce
 - [ ] Check: Results shows stock vs model vs listeners, latency medians, calibrated threshold, from real data
 
 ## Phase 5: Toolkit
-- [ ] Read/write profile, SSE events, Tell the app → settings_proposal → confirm
+- [x] Read/write profile, SSE events, Tell the app → settings_proposal → confirm
 - [ ] Check: text size syncs both ways within 5 s; "bigger text" spoken by P1 gives a confirm card
 
 ## Phase 6: Calls
-- [ ] Twilio call, `<Connect><Stream>`, callee captions, his sentences as ulaw_8000, pulse tone, opening line
+- [x] Twilio call, `<Connect><Stream>`, callee captions, his sentences as ulaw_8000, pulse tone, opening line
 - [ ] Check: a call to a verified phone works end to end
 
 ## Phase 7: Hands-free
-- [ ] ECAPA speaker gate, hands-free toggle, partner captions, Them button, partials
+- [x] ECAPA speaker gate, hands-free toggle, partner captions, Them button, partials
 - [ ] Check: the other person's speech becomes captions and is never spoken
 
 ## Morning (human checks)
 - [ ] Install the development build on the iPhone (RUNBOOK) and repeat each phase check on the device
 - [ ] VoiceOver walkthrough of Talk, Pick one and Speaking
 - [ ] A Twilio test call to a teammate's verified phone
+
+## Experimental (EXP-SPEC.md)
+Owned by a separate Claude session (lips X0–X4, realtime voice R1, partner captions R2). This build does not touch it.
+
+## Beyond the spec (see docs/IMPROVEMENTS.md)
+- [x] App-to-app calls by code with a guest page, no Twilio needed
+- [x] Speculative recognition on pauses
+- [x] Gate evidence: beam agreement, word confidence, measured accuracy as base rate
+- [x] Tell the app via Jev's calibrated choice over an allowed list
+- [ ] CTranslate2 decoder for speed, kept only at WER parity (in progress)
+- [ ] Speech enhancement, kept only if his WER drops (in progress)

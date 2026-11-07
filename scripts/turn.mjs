@@ -4,11 +4,12 @@
 import fs from 'node:fs';
 import { readDotenv } from './dotenv.mjs';
 
-const [file, speaker = 'P1'] = process.argv.slice(2);
-if (!file) {
-  console.error('Usage: node scripts/turn.mjs <wav file> [speaker]');
-  process.exit(1);
-}
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
+// True when run as `node scripts/turn.mjs`, false when the smoke check imports it.
+const isMain = path.resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url);
+const [file, speaker = 'P1'] = isMain ? process.argv.slice(2) : [];
 const env = { ...readDotenv('.env'), ...process.env };
 const server = (env.SMOKE_SERVER_URL || fs.readFileSync('.work/server-url', 'utf8')).trim();
 const FRAME_BYTES = 3200; // 100 ms at 16 kHz, 16-bit mono.
