@@ -1,0 +1,100 @@
+/*
+  The kit's default theme for shadcn/ui on Tailwind v4. After `npx shadcn@latest init`, in the
+  global stylesheet it wrote (app/globals.css or src/index.css):
+    1. add the four lines of the first block inside its existing `@theme inline { ... }`;
+    2. replace its `:root { ... }` with the second block, and its `.dark { ... }` with the third.
+  Neutral greys, a near-black primary, and status colours used only for status. shadcn's own dark
+  theme and charts use violet and blue-violet; these replace them. To give the product a brand
+  colour, set --brand (keep the lightness near 0.55) and use it only for the primary action, focus
+  and selection: `bg-brand text-brand-foreground`.
+*/
+
+@theme inline {
+  /* Geist from next/font (create-next-app's default) or from @fontsource-variable/geist. */
+  --font-sans: var(--font-geist-sans, "Geist Variable"), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono, "Geist Mono Variable"), ui-monospace, monospace;
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  /* A touch darker than shadcn's 0.556, so secondary text passes contrast on white. */
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  /* No brand colour yet: the primary action stays near-black. */
+  --brand: oklch(0.205 0 0);
+  --brand-foreground: oklch(0.985 0 0);
+  --success: oklch(0.55 0.13 150);
+  --warning: oklch(0.7 0.15 70);
+  /* Charts in one neutral ramp; give a series colour only when it means something. */
+  --chart-1: oklch(0.205 0 0);
+  --chart-2: oklch(0.42 0 0);
+  --chart-3: oklch(0.58 0 0);
+  --chart-4: oklch(0.72 0 0);
+  --chart-5: oklch(0.85 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.18 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --brand: oklch(0.922 0 0);
+  --brand-foreground: oklch(0.205 0 0);
+  --success: oklch(0.7 0.14 150);
+  --warning: oklch(0.8 0.14 75);
+  --chart-1: oklch(0.922 0 0);
+  --chart-2: oklch(0.75 0 0);
+  --chart-3: oklch(0.6 0 0);
+  --chart-4: oklch(0.45 0 0);
+  --chart-5: oklch(0.32 0 0);
+  --sidebar: oklch(0.18 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}

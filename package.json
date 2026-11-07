@@ -1,0 +1,13 @@
+{
+  "name": "my-voice",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "deploy": "node scripts/deploy.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "verify": "npm run typecheck && npm run test:server && npm run smoke",
+    "typecheck": "cd app && npx tsc --noEmit",
+    "test:server": "cd server && uv run pytest -q",
+    "doctor": "node scripts/doctor.mjs"
+  }
+}
