@@ -5,7 +5,8 @@ held-out 1/5 exactly as serving does (`voice.asr.whisper`), clean and mixed with
 one trainer setting; its score is the mean over those three conditions of the pooled WER on all held-out clips.
 
 Run: cd server && modal run scripts_train_cv.py --speaker S1 --variants default,rank16 --seeds 1234
-Results are appended to speech-data/<speaker>/eval/train_cv.jsonl and printed.
+Per-clip results are appended to .work/train_cv_<speaker>.jsonl (git-ignored) and the scores printed.
+`patience3` is the spec's 9.3 setting (patience 3, 15 epochs); the trainer now defaults to patience 5 and 25 epochs.
 """
 
 import json
@@ -31,6 +32,7 @@ VARIANTS = {
     "lr5e-5": {"trainer.LEARNING_RATE": 5e-5},
     "lr2e-4": {"trainer.LEARNING_RATE": 2e-4},
     "patience5": {"trainer.PATIENCE": 5, "trainer.MAX_EPOCHS": 25},
+    "patience3": {"trainer.PATIENCE": 3, "trainer.MAX_EPOCHS": 15},
     "no_babble": {"augment.BABBLE_PROBABILITY": 0.0},
     "more_babble": {"augment.BABBLE_PROBABILITY": 0.8, "augment.SNR_RANGE_DB": (-5.0, 15.0)},
     "no_speed": {"augment.SPEEDS": (1.0,)},
@@ -48,11 +50,21 @@ def fold_of(clip_ids: list[str]) -> dict[str, int]:
     return {clip_id: index % FOLDS for index, clip_id in enumerate(ordered)}
 
 
+# The defaults of every setting a variant touches, captured on first use: Modal reuses containers across inputs,
+# so each fold restores them before applying its own variant.
+DEFAULTS: dict = {}
+
+
 def apply_overrides(overrides: dict) -> None:
-    """Sets the variant's trainer and augmentation constants in this container."""
+    """Restores every trainer and augmentation constant to its default, then sets the variant's values."""
     from voice.training import augment, trainer
 
     modules = {"trainer": trainer, "augment": augment}
+    keys = {key for variant in VARIANTS.values() for key in variant if key != "extra_speaker"} | {"trainer.SEED"}
+    for key in keys:
+        module, name = key.split(".")
+        DEFAULTS.setdefault(key, getattr(modules[module], name))
+        setattr(modules[module], name, DEFAULTS[key])
     for key, value in overrides.items():
         if key == "extra_speaker":
             continue

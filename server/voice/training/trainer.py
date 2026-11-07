@@ -22,8 +22,10 @@ LEARNING_RATE = 1e-4
 WARMUP_STEPS = 10
 EFFECTIVE_BATCH = 16
 MICRO_BATCH = 8
-MAX_EPOCHS = 15
-PATIENCE = 3
+# Spec 9.3 says 15 and 3. With a validation set of 4 or 5 clips, patience 3 stopped runs at epoch 3 to 5 on noise;
+# 25 and 5 cut cross-validated WER on S1's training clips from 67.4 to 54.3 over 3 seeds (docs/IMPROVEMENTS.md).
+MAX_EPOCHS = 25
+PATIENCE = 5
 # With few clips an epoch still holds this many augmented examples (4 optimiser steps), so 10 clips can learn.
 MIN_EXAMPLES_PER_EPOCH = 64
 # Stops before an epoch that would push training past this, keeping the whole job under 6 minutes.

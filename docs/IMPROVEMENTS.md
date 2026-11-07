@@ -3,16 +3,17 @@
 Each was kept only after it was measured against the spec's own approach. Numbers are real runs on the deployed
 server or on Modal GPUs; "words understood" is 100 minus WER on held-out test sentences, never trained on.
 
-## Personal model for S1 (spec 9.3, as specified)
+## Personal model for S1 (spec 9.3)
 
-Not an improvement on the spec, but the result it exists for: his first personal model, trained on 50 of his clips.
+His personal models, trained on his 50 training clips; 14 more are kept for testing and never trained on.
+v2 lets training run longer (see "Longer training" below). One `eval_asr` run with the serving decoder:
 
-| Condition (n clips) | Stock Whisper | His model v1 |
-| --- | --- | --- |
-| Quiet (10) | 48.2% | 79.0% |
-| Real noisy recordings (4) | 22.9% | 65.7% |
-| Babble 5 dB (10) | 19.8% | 61.7% |
-| Babble 0 dB (10) | 0.0% | 24.7% |
+| Condition (n clips) | Stock Whisper | v1 (spec defaults) | v2 (active) |
+| --- | --- | --- | --- |
+| Quiet (10) | 49.4% | 76.5% | 77.8% |
+| Real noisy recordings (4) | 22.9% | 65.7% | 68.6% |
+| Babble 5 dB (10) | 22.2% | 61.7% | 56.8% |
+| Babble 0 dB (10) | 0.0% | 24.7% | 30.9% |
 
 ## App-to-app calls by code
 
@@ -146,3 +147,57 @@ torchaudio 2.11 installed without dependencies; DeepFilterNet needs a shim for a
 **If an enhancer is ever adopted:** apply it in `voice/turns/turn.py` on the captured turn audio, once, before the recogniser and the
 phrase matcher (both then see the same audio), behind a per-speaker setting, and only for the model it was measured with.
 Image additions: the `apt` and `pip` lines of `enhance_image` in `scripts_enhance_eval.py`.
+
+## Longer early-stopping patience for small data (S1 v2)
+
+**What:** the trainer's early stopping waits 5 epochs without a validation gain (spec 9.3: 3) and runs up to 25 epochs
+(spec: 15). Everything else in 9.3 is unchanged: training from the base model each time, rank 32, learning rate 1e-4,
+the same augmentation, the promotion rule and the registry. `server/voice/training/trainer.py`, tested in
+`server/tests/test_training_early_stopping.py`.
+
+**Why:** with 50 clips the validation set is 5 clips (4 inside a cross-validation fold), so validation WER jumps by whole
+words from epoch to epoch. With patience 3 most runs stopped at epoch 3 to 5 on that noise; the best epochs with patience 5
+were 4 to 20.
+
+**How it was chosen (validation only, never the test set):** 5-fold cross-validation on his 50 training clips
+(`server/scripts_train_cv.py`). Each fold trains the real trainer on 40 clips (36 train, 4 validation for early stopping),
+then decodes the 10 held-out clips with the serving recogniser, clean and mixed with babble at 5 and 0 dB. Score: mean of
+the three pooled WERs over all 50 held-out clips. One change at a time, 3 training seeds (1234, 1, 2) for every contender.
+
+| Variant (one change from the spec defaults) | Seeds | CV mean WER per seed | Average |
+| --- | --- | --- | --- |
+| Spec defaults (patience 3, 15 epochs) | 3 | 68.5, 62.2, 71.7 | 67.4 |
+| **Patience 5, 25 epochs** | 3 | 56.4, 53.3, 53.4 | **54.3** |
+| Learning rate 2e-4 | 3 | 55.3, 64.1, 53.5 | 57.6 |
+| LoRA rank 64 | 3 | 56.2, 65.7, 55.4 | 59.1 |
+| No speed change | 3 | 52.9, 66.5, 68.0 | 62.5 |
+| Babble p=0.8 at -5 to 15 dB | 1 | 62.4 | |
+| P1's 10 trainable clips added | 1 | 62.8 | |
+| Stronger SpecAugment (0.1) | 1 | 65.5 | |
+| Learning rate 5e-5 | 1 | 68.7 | |
+| No babble | 1 | 69.8 | |
+| LoRA rank 16 | 1 | 70.6 | |
+| Stock Whisper (no training) | | 94.2 | |
+
+Every patience-5 seed beat every default seed (per condition, averaged over seeds: quiet 35.2 vs 43.7, babble 5 dB 53.0 vs
+65.5, babble 0 dB 74.7 vs 93.1). On top of patience 5, a second change did not help: learning rate 2e-4 56.3, rank 64 55.3,
+stronger babble 55.9, stronger SpecAugment 56.5, P1's 10 trainable clips added 56.9 (3 seeds each, against 54.3). Not testable here:
+a vocabulary decoder prompt (S1 has no vocabulary list, and the serving decoder has no prompt), and warm-starting from the
+teammate's S1 adapter (it was trained on all 50 training clips, so cross-validation would leak, and 9.3 trains from base).
+
+**Test result (once, after the choice; promotion rule decided):** words understood on his frozen test set, scored in one
+`eval_asr` run with the current 5-beam serving decode.
+
+| Condition (n clips) | Stock | v1 (spec defaults) | v2 (patience 5) |
+| --- | --- | --- | --- |
+| Quiet (10) | 49.4% | 76.5% | 77.8% |
+| Real noisy (4) | 22.9% | 65.7% | 68.6% |
+| Babble 5 dB (10) | 22.2% | 61.7% | 56.8% |
+| Babble 0 dB (10) | 0.0% | 24.7% | 30.9% |
+| Mean WER | 84.1 | 42.8 | 41.5 |
+
+v2 was promoted (mean WER 40.9 vs 42.8 in its scoring run; quiet better) and is active. The test set is 34 clips, so v2's
+lead over v1 on test is within a few words and is not by itself evidence; the evidence for the change is the
+cross-validation above. Training time for 45 clips went from 82 s (v1, 15 epochs) to 132 s (v2, 25 epochs); the trainer's
+240 s budget still bounds a large set. The stock and v1 numbers in the table at the top of this file came from an earlier
+8-beam decode; the ones here supersede them.
