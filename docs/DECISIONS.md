@@ -130,3 +130,13 @@ Sources for API facts are in `docs/API-NOTES.md`.
   shared working tree once shipped unfinished code and stopped the server until it was redeployed from HEAD.
 - **A Lips button on Talk** (user request) appears only when the server runs with `LIPS=1`; it opens the separate
   lips screen. With the flag off, Talk is unchanged.
+
+## Parked: CTranslate2 decoder (not live)
+
+Built (`server/voice/asr/ct2.py`, patch for serving in `.work/ct2-serving.patch`) and measured: 140 ms per clip
+instead of ~700 ms, and real n-best (transformers 5.22 returns the same hypothesis five times for Whisper n-best).
+With it, S1 v1 scored the same on noisy and babble conditions but 2.5 points lower in quiet (76.5% vs 79.0%), and the
+first serving deploy with it failed to start. Kept out of the live app for the demo. Next: build a jobs-only image with
+it, replay S1's test set through the whole pipeline (`eval_pipeline`), switch only if the right sentence reaches him at
+least as often with no more wrong sentences spoken, and find the start-up failure before any serving deploy.
+The jobs score with the serving decoder (transformers), so promotions match what he hears.

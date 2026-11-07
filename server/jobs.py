@@ -74,10 +74,10 @@ def commit() -> None:
 
 def whisper_loader():
     """Loads the serving recogniser on this container's GPU."""
-    from voice.asr.ct2 import load_ct2_whisper
+    from voice.asr.whisper import load_whisper
 
-    # The serving decoder, so promotion is judged exactly as he'll be heard; set_adapter converts each version once.
-    return load_ct2_whisper("cuda")
+    # The serving decoder, so promotion is judged exactly as he'll be heard (CTranslate2 is parked: DECISIONS).
+    return load_whisper("cuda")
 
 
 @app.function(image=jobs_image, volumes=VOLUMES, timeout=JOB_TIMEOUT_S, cpu=4, memory=8192)
