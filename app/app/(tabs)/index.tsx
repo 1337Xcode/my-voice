@@ -1,6 +1,6 @@
 /** Talk: the main screen (spec 11.3). One big button at the bottom centre; the middle shows the turn's state. */
-import { Link } from 'expo-router';
-import { Check, Keyboard, Settings, SlidersHorizontal, X } from 'lucide-react-native';
+import { Link, router } from 'expo-router';
+import { Check, Keyboard, ScanFace, Settings, SlidersHorizontal, X } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -8,6 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { ConnectionBadge } from '@/components/ConnectionBadge';
+import { useExperimentAvailability } from '@/features/experiments/ExperimentsSync';
+import { useExperimentChoices } from '@/features/experiments/store';
 import { stateTransition, useReduceMotion } from '@/features/motion/useReduceMotion';
 import { usePhrases } from '@/features/phrases/PhrasesProvider';
 import { RoundAction, RoundSpacer } from '@/features/talk/RoundAction';
@@ -41,6 +43,8 @@ function LearnedNote() {
 
 export default function TalkScreen() {
   const talk = useTalk('talk');
+  const experiments = useExperimentAvailability();
+  const choices = useExperimentChoices();
   const { mostUsed } = usePhrases();
   const [typing, setTyping] = useState(false);
   const button = buttonFor(talk);
@@ -54,6 +58,15 @@ export default function TalkScreen() {
         <ConnectionBadge />
         {talk.learned ? <LearnedNote /> : null}
         <View style={styles.topRight}>
+          {kind === 'idle' && talk.online && experiments.lips ? (
+            // Experiment (EXP-SPEC): only on a server with LIPS=1; opens the separate lips screen.
+            <Pressable accessibilityRole="button" accessibilityLabel="Talk with lips" accessibilityHint="Opens lip reading with the front camera" onPress={() => router.push(choices.lipsCamera ? '/lips' : '/experiments')} style={({ pressed }) => [styles.tell, pressed && styles.pressed]}>
+              <ScanFace size={16} color={colors.text} />
+              <AppText variant="caption" unscaled>
+                Lips
+              </AppText>
+            </Pressable>
+          ) : null}
           {kind === 'idle' && talk.online ? (
             <Pressable accessibilityRole="button" accessibilityLabel="Tell the app" accessibilityHint="Say a settings change, like make the text bigger" onPress={() => void talk.talk('tell')} style={({ pressed }) => [styles.tell, pressed && styles.pressed]}>
               <SlidersHorizontal size={16} color={colors.text} />
