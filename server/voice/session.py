@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import logging
+import secrets
 
 from fastapi import WebSocket, WebSocketDisconnect
 
@@ -37,6 +38,11 @@ class Session:
         self.call = None
         # Experiments (EXP-SPEC), each None unless the server flag is on and the app opted in.
         self.realtime = None
+        self.lips = None
+        # Names this session for the lips camera's own socket (/ws/lips).
+        self.id = secrets.token_urlsafe(9)
+        # Audio samples received on this connection; the lips clock maps them to the phone's clock.
+        self.audio_samples = 0
 
     async def send(self, message: dict) -> None:
         """Sends one JSON message to the app; a closed socket is ignored."""
@@ -101,10 +107,13 @@ class Session:
         record = TurnRecord(turn_id=turn_id, speaker=self.speaker, mode=mode, model_version=self.runtime.model_version(self.speaker))
         silence_ms = int(self.settings()["endpoint_silence_ms"])
         self.turn = Turn(record=record, audio=TurnAudio(vad_model=self.vad_model, silence_ms=silence_ms))
+        if self.lips is not None:
+            self.lips.turn_started(self.turn, self.audio_samples)
         await self.peer_state("listening")
 
     async def on_audio(self, frame: bytes) -> None:
         """One binary audio frame for the open turn; ends the turn when the VAD hears the end of speech."""
+        self.audio_samples += len(frame) // 2
         turn = self.turn
         if turn is None or turn.state != "listening":
             return
@@ -180,6 +189,28 @@ class Session:
             realtime, self.realtime = self.realtime, None
             self.spawn(realtime.close())
         await self.send({"type": "experiments", "realtime_voice": self.realtime is not None})
+
+    async def on_lips_mode(self, message: dict) -> None:
+        """The lips screen opened or closed (EXP X0); only honoured when the server's LIPS flag is on."""
+        from voice.lips.live import LipSession
+
+        if not message.get("on"):
+            self.lips = None
+            await self.send({"type": "lips_mode", "on": False})
+            return
+        if not features().lips:
+            await self.send({"type": "lips_mode", "on": False, "reason": "Lip reading is switched off on the server."})
+            return
+        if self.lips is None:
+            self.lips = LipSession(self, bool(message.get("hands_free")))
+        self.lips.hands_free = bool(message.get("hands_free"))
+        await self.send({"type": "lips_mode", "on": True, "session_id": self.id})
+
+    async def on_audio_clock(self, message: dict) -> None:
+        """How many samples the app had sent at a device time (EXP-SPEC 4.3)."""
+        samples, device_ms = message.get("samples"), message.get("device_ms")
+        if self.lips is not None and isinstance(samples, int) and isinstance(device_ms, (int, float)):
+            self.lips.clock.report(samples, float(device_ms))
 
     async def on_client_timing(self, message: dict) -> None:
         """The app's measured end-to-text and end-to-audio times for a turn."""

@@ -39,4 +39,19 @@ def create_app(runtime: Runtime) -> FastAPI:
         await ws.accept()
         await run_session(ws, runtime)
 
+    @app.websocket("/ws/lips")
+    async def lips_websocket(ws: WebSocket, token: str | None = Query(default=None), session_id: str = Query(default="")):
+        """The lips camera's frames (EXP X0), for an app session that has lips mode on."""
+        from voice.lips.live import run_lip_stream
+
+        if not token_matches(bearer(ws.headers.get("authorization")) or token):
+            await ws.close(code=4401, reason="The app token is missing or wrong.")
+            return
+        session = next((s for s in runtime.sessions if s.id == session_id and s.lips is not None), None)
+        if session is None:
+            await ws.close(code=4404, reason="Lips mode is not on for this session. Open the lips screen again.")
+            return
+        await ws.accept()
+        await run_lip_stream(ws, session)
+
     return app

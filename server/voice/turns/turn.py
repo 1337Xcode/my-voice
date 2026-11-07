@@ -5,7 +5,9 @@ from dataclasses import dataclass, field
 from voice.audio.endpointing import TurnAudio
 from voice.turns.record import TurnRecord
 
-MODES = ("talk", "handsfree", "call", "tell", "them")
+MODES = ("talk", "handsfree", "call", "tell", "them",
+         # Experiments (EXP-SPEC): the lips sync check.
+         "lips_sync")
 
 
 @dataclass

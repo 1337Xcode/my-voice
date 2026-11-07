@@ -49,6 +49,15 @@ class TurnFlow:
     async def process(self, turn: Turn) -> None:
         """End of speech → recognisers → decision → result (and voice when speaking)."""
         self.remember(turn)
+        lips = self.session.lips
+        if turn.mode == "lips_sync":
+            turn.state = "finished"
+            if lips is not None:
+                await lips.sync_check(turn)
+            await asyncio.to_thread(turn.record.save)
+            return
+        if lips is not None:
+            turn.record.exp["lips"] = lips.summary(turn)
         if turn.mode == "them" or (turn.mode == "handsfree" and not await self.is_him(turn)):
             await self.caption_partner(turn)
             return
