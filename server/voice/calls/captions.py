@@ -19,6 +19,25 @@ SEGMENT_SILENCE_MS = 700
 # A segment that has held no real speech for this long is dropped and restarted, so silence never piles up.
 IDLE_RESTART_SAMPLES = 5 * SAMPLE_RATE
 IDLE_SILENCE_MS = 1_000
+# Phone lines carry noise blips; two speech windows in a row (64 ms) are needed to count as speech again.
+CONFIRM_WINDOWS = 2
+# A caption line longer than this ends at the next short pause, so captions keep flowing while they talk.
+LONG_SEGMENT_SAMPLES = 8 * SAMPLE_RATE
+SHORT_PAUSE_MS = 300
+
+
+def drop_reason(recognition) -> str:
+    """The guard that removed every hypothesis: no speech, a stock filler phrase, a repetition loop, or nothing heard."""
+    from voice.asr.whisper import MAX_COMPRESSION_RATIO, MAX_NO_SPEECH_PROBABILITY, compression_ratio, filler_key
+
+    if recognition.no_speech_probability > MAX_NO_SPEECH_PROBABILITY:
+        return f"no_speech {recognition.no_speech_probability:.2f}"
+    if not recognition.dropped:
+        return "empty"
+    text = recognition.dropped[0]
+    if compression_ratio(text) > MAX_COMPRESSION_RATIO:
+        return f"repetition loop (ratio {compression_ratio(text):.1f}, {len(text.split())} words)"
+    return f"filler phrase ({len(filler_key(text).split())} words)" if filler_key(text) else "empty"
 
 
 class CaptionStream:
@@ -33,15 +52,18 @@ class CaptionStream:
         self.queue: asyncio.Queue[np.ndarray] = asyncio.Queue()
         self.worker: asyncio.Task | None = None
         # Counts logged when the call ends, so a silent call and a deaf detector can be told apart.
-        self.stats = {"seconds_in": 0.0, "speech_ms": 0.0, "segments": 0, "captions": 0, "dropped_by_guards": 0}
+        self.stats = {"seconds_in": 0.0, "speech_ms": 0.0, "segments": 0, "captions": 0, "dropped_by_guards": 0, "longest_pause_ms": 0.0}
 
     async def start(self) -> None:
         """Loads this stream's own VAD (it keeps state per stream) and starts the transcriber."""
         from silero_vad import load_silero_vad
 
         self.vad_model = await asyncio.to_thread(load_silero_vad)
-        self.segment = TurnAudio(vad_model=self.vad_model, silence_ms=SEGMENT_SILENCE_MS)
+        self.segment = self._new_segment()
         self.worker = asyncio.create_task(self._transcribe_in_order())
+
+    def _new_segment(self) -> TurnAudio:
+        return TurnAudio(vad_model=self.vad_model, silence_ms=SEGMENT_SILENCE_MS, confirm_windows=CONFIRM_WINDOWS)
 
     def add(self, audio: np.ndarray) -> None:
         """Adds 16 kHz float samples; a finished spoken segment is queued for transcription."""
@@ -49,14 +71,21 @@ class CaptionStream:
         if segment is None:
             return
         speech_before = segment.state.speech_ms
-        ended = segment.add(audio)
+        ended = segment.add(audio) or self._long_and_pausing(segment)
+        self.stats["longest_pause_ms"] = max(self.stats["longest_pause_ms"], segment.state.trailing_silence_ms)
         self.stats["seconds_in"] += audio.size / 16_000
         self.stats["speech_ms"] += segment.state.speech_ms - speech_before
         if ended or self._idle(segment):
-            self.segment = TurnAudio(vad_model=self.vad_model, silence_ms=SEGMENT_SILENCE_MS)
+            self.segment = self._new_segment()
             if ended and not segment.too_short():
                 self.stats["segments"] += 1
                 self.queue.put_nowait(segment.speech_audio())
+
+    @staticmethod
+    def _long_and_pausing(segment: TurnAudio) -> bool:
+        """A long line ends at a short pause instead of waiting for a full one."""
+        state = segment.state
+        return segment.total >= LONG_SEGMENT_SAMPLES and state.heard_speech and state.trailing_silence_ms >= SHORT_PAUSE_MS
 
     @staticmethod
     def _idle(segment: TurnAudio) -> bool:
@@ -87,12 +116,32 @@ class CaptionStream:
         if whisper is None:
             raise RuntimeError("the recogniser is not loaded on this server")
         recognition = await asyncio.to_thread(whisper.nbest, audio, n=1, stock=True)
+        if not recognition.hypotheses:
+            # Why it was dropped, never what was said (their words are not kept, not even in logs).
+            log.info("caption dropped: %s, %.1f s of audio", drop_reason(recognition), audio.size / SAMPLE_RATE)
         return recognition.hypotheses[0].text.strip() if recognition.hypotheses else ""
 
     def stop(self) -> None:
-        """Stops transcribing and drops any queued audio."""
+        """Stops transcribing; what they were saying as the call ended is still captioned."""
+        segment, self.segment = self.segment, None
+        if segment is not None and segment.state.heard_speech and not segment.too_short():
+            self.stats["segments"] += 1
+            self.queue.put_nowait(segment.speech_audio())
         log.info("caption stream stats: %s", {k: round(v, 1) for k, v in self.stats.items()})
-        self.segment = None
+        if self.worker is not None and not self.queue.empty():
+            # Let the worker finish the last lines, then stop it.
+            asyncio.get_running_loop().create_task(self._drain_then_stop())
+            return
+        self._cancel()
+
+    async def _drain_then_stop(self) -> None:
+        while not self.queue.empty():
+            await asyncio.sleep(0.2)
+        await asyncio.sleep(3)  # the last transcription is still running
+        self._cancel()
+
+    def _cancel(self) -> None:
+        """Stops the transcriber and drops anything still queued."""
         if self.worker is not None:
             self.worker.cancel()
         while not self.queue.empty():

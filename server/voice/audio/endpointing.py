@@ -42,6 +42,10 @@ class TurnAudio:
     state: EndpointState = field(default_factory=EndpointState)
     pending: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float32))
     paused: bool = False
+    # Consecutive speech windows needed before a pause counts as broken. 1 for his turns; phone captions use 2 so
+    # single noise blips on the line don't keep a segment open forever.
+    confirm_windows: int = 1
+    speech_run: int = 0
     next_partial_at: int = PARTIAL_FIRST_SAMPLES
 
     def __post_init__(self):
@@ -64,7 +68,8 @@ class TurnAudio:
         state = self.state
         start = self.scored_upto
         self.scored_upto += WINDOW_SAMPLES
-        if probability >= SPEECH_PROBABILITY:
+        self.speech_run = self.speech_run + 1 if probability >= SPEECH_PROBABILITY else 0
+        if self.speech_run >= self.confirm_windows:
             self.paused = False
             state.speech_ms += WINDOW_MS
             state.trailing_silence_ms = 0.0
