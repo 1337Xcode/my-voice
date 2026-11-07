@@ -1,6 +1,6 @@
 /** Covers the app until it has an access code (the server's app token): the public web build ships without one. */
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -64,6 +64,24 @@ function JoinInstead({ onBack }: { onBack: () => void }) {
   );
 }
 
+/** On the web, an unlock link (`/?access=<code>`) saves the code on this device and is wiped from the address bar. */
+function useAccessLink(loaded: boolean, save: (token: string) => void) {
+  useEffect(() => {
+    if (!loaded || Platform.OS !== 'web' || typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get('access')?.trim();
+    if (!code) return;
+    url.searchParams.delete('access');
+    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+    save(code);
+  }, [loaded, save]);
+}
+
+/** A stable "save this token" function for the unlock link. */
+function useCallbackToken(updateDev: (change: { token: string }) => void) {
+  return useCallback((token: string) => updateDev({ token }), [updateDev]);
+}
+
 export function AccessGate() {
   const { settings, loaded, updateDev } = useSettings();
   const { status } = useConnection();
@@ -71,6 +89,7 @@ export function AccessGate() {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
+  useAccessLink(loaded, useCallbackToken(updateDev));
   const needed = loaded && (!settings.dev.token || status === 'unauthorised');
   if (!needed) return null;
 
