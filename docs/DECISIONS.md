@@ -74,3 +74,30 @@ Sources for API facts are in `docs/API-NOTES.md`.
   (`/c/<code>`); a family member opens it in any browser (iPhone Safari included), taps Call, and his app rings. They
   hear only the clear voice and see each sentence large; he sees their words as captions. Works with no Twilio keys.
   Twilio phone calls (spec 13) are built too and switch on when the keys are set.
+
+## Experiments (EXP-SPEC: lips and realtime voice)
+
+- **A separate Experiments area, all off by default.** The server flags `REALTIME_VOICE` and `LIPS` only make an
+  experiment available; he switches each on in Settings → Experiments (stored apart from the core settings under
+  `experiments.v1`). With a flag off the server sends nothing new and the app shows no new control; with a flag on
+  but the switch off, every turn runs exactly the core path. The spec's Talk-screen Lips toggle became its own
+  "Talk with lips" screen inside Experiments, so the core Talk screen never changes.
+- **The spec's `EXP-SPEC.md` is at the repo root**, not in `docs/`.
+- **Flags pass through the shell at deploy time** (`REALTIME_VOICE=1 LIPS=1 npm run deploy`) as well as from `.env`,
+  because a deploy from a `.env` without them switches the experiments off.
+- **R1 uses ElevenLabs `/multi-stream-input`, not `/stream-input`.** Probed live: `/stream-input` never marks the end
+  of a flushed sentence (`isFinal` only arrives when the socket closes), so the app could not know when the voice had
+  finished and the microphone could resume. The multi-context endpoint, with one context per sentence and
+  `close_context` straight after the flushed text, returns `isFinal` per sentence on one long-lived connection: first
+  audio 108–126 ms, end marked every time (5 sentences, pcm_24000 and ulaw_8000). Model `eleven_flash_v2_5`,
+  `auto_mode=true`, `inactivity_timeout=180`, an empty-text keepalive every 60 s, speed set per context.
+- **R1 sends audio to the app as 24 kHz 16-bit PCM in quarter-second pieces.** ElevenLabs returns about a second of
+  audio per chunk; splitting it cut result-to-first-piece from 276–287 ms to 225–246 ms on a UK connection.
+- **R1 caches streamed sentences** like the whole-clip voice does (`tts/<voice>/pcm_24000/<hash>.pcm`): a sentence he
+  has said before starts 88–98 ms after the result.
+- **R1 on web builds only, through Web Audio.** `react-native-audio-api` (spec 6) needs a native build, and none can
+  be made yet (no EAS login, Windows machine). The phone runs the web build, so streamed chunks play through one
+  `AudioContext`, scheduled back to back; the first tap after switching it on unlocks sound on iOS Safari. If a
+  sentence's stream fails before any sound, the whole-clip voice says it instead (real audio, not a stand-in).
+- **R1 on calls:** a per-call stream in the far side's format: `ulaw_8000` media messages to Twilio (not testable
+  until the Twilio keys are set) and PCM pieces to a guest's browser on app-to-app calls (tested).

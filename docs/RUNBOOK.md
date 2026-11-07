@@ -120,3 +120,22 @@ cd server && uv run pytest -m live
 
 `doctor` calls each provider once with the keys in `.env`. `verify` typechecks the app, runs the server tests and the
 smoke flows against the deployed server. The live tests call Jev, OpenAI and Anthropic for real.
+
+## Experiments (lips and realtime voice)
+
+Off unless the server flag is set; even then each one is off until he switches it on in Settings → Experiments.
+
+```bash
+REALTIME_VOICE=1 LIPS=1 npm run deploy   # or put REALTIME_VOICE=1 and LIPS=1 in .env so every deploy keeps them
+npm run deploy:web                         # the iPhone uses the web build
+```
+
+Measured numbers for each acceptance check: `GET /experiments/report?speaker=P1` (the Experiments screen shows them).
+
+### R1 streamed voice
+
+On the iPhone: Settings → Experiments → Stream my voice on → tap anywhere once (unlocks sound) → Talk 20 sentences.
+The Experiments card then shows the middle time from the text appearing to the first sound (target 350 ms over 20).
+From the computer: `node .work/probes/r1_turns.mjs 3` (P1 recordings through live turns) and the smoke flow `R1`.
+
+ElevenLabs offers zero data retention only on enterprise plans; streamed text is processed like the whole-clip voice.
