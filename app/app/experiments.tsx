@@ -1,9 +1,11 @@
 /** Experiments (EXP-SPEC): features still being tested, each off until he switches it on, with its measured numbers. */
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
+import { ScanFace } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, Switch, View } from 'react-native';
 import { z } from 'zod';
 
 import { AppText } from '@/components/AppText';
+import { Button } from '@/components/Button';
 import { ErrorNote } from '@/components/ErrorNote';
 import { Screen } from '@/components/Screen';
 import { useServerData } from '@/features/connection/useServerData';
@@ -18,6 +20,10 @@ const reportSchema = z.object({
     target_ms: z.number(),
     needed_turns: z.number(),
     met: z.boolean(),
+  }),
+  lips_report: z.object({
+    capture: z.object({ seconds: z.number(), fps_median: z.number().nullable(), seconds_at_24_pct: z.number(), met: z.boolean() }).nullable(),
+    sync_offsets_ms: z.array(z.number()),
   }),
 });
 type Report = z.infer<typeof reportSchema>;
@@ -49,6 +55,23 @@ function StreamedVoiceNumbers({ report }: { report: Report['realtime'] }) {
   );
 }
 
+/** The lips test results so far, in one or two plain lines. */
+function LipsNumbers({ report }: { report: Report['lips_report'] }) {
+  const capture = report.capture;
+  return (
+    <View style={styles.numbers}>
+      <AppText variant="caption" tone="muted">
+        {capture
+          ? `Camera test: ${capture.fps_median ?? 0} frames a second over ${Math.round(capture.seconds / 60)} min, ${capture.seconds_at_24_pct}% of seconds at 24 or more. ${capture.met ? 'Target met.' : 'Target is 24 for 10 minutes.'}`
+          : 'Camera test not run yet.'}
+      </AppText>
+      <AppText variant="caption" tone="muted">
+        {report.sync_offsets_ms.length ? `Sound and picture lined up (${Math.round(report.sync_offsets_ms[report.sync_offsets_ms.length - 1])} ms).` : 'Sync check not done yet.'}
+      </AppText>
+    </View>
+  );
+}
+
 export default function ExperimentsScreen() {
   const choices = useExperimentChoices();
   const available = useExperimentAvailability();
@@ -70,6 +93,21 @@ export default function ExperimentsScreen() {
           {parsed?.success ? <StreamedVoiceNumbers report={parsed.data.realtime} /> : null}
         </View>
       ) : null}
+      {available.lips ? (
+        <View style={styles.card}>
+          <SwitchRow label="Use my camera for lip reading" value={choices.lipsCamera} onChange={(lipsCamera) => updateExperiments({ lipsCamera })} />
+          <AppText variant="caption" tone="muted">
+            The front camera watches your mouth to tell when you are speaking, so your turn ends sooner and other people are ignored. The picture is never shown and never kept.
+          </AppText>
+          {choices.lipsCamera ? (
+            <View style={styles.actions}>
+              <Button label="Talk with lips" kind="primary" icon={ScanFace} onPress={() => router.push('/lips')} />
+              <Button label="Set up the camera" onPress={() => router.push('/lips-setup')} />
+            </View>
+          ) : null}
+          {parsed?.success ? <LipsNumbers report={parsed.data.lips_report} /> : null}
+        </View>
+      ) : null}
       {!available.realtimeVoice && !available.lips ? <AppText>No experiments are running on this device.</AppText> : null}
     </Screen>
   );
@@ -81,4 +119,6 @@ const styles = StyleSheet.create({
   switchLabel: { flex: 1 },
   number: { fontVariant: ['tabular-nums'], color: colors.text },
   spinner: { alignSelf: 'flex-start' },
+  actions: { gap: space.sm },
+  numbers: { gap: space.xs },
 });
