@@ -62,9 +62,10 @@ def test_speed_change_shortens_or_lengthens_the_clip():
 
 
 def test_skipped_sentences_are_left_out_and_ids_keep_their_place():
-    lists = [["Test sentence."], ["Fine one.", "[sentence removed]", "Fine two."]]
-    teach = harvard_prompts(lists)["teach"]
-    assert [item["id"] for item in teach] == ["h02-01", "h02-03"]
+    lists = [["Test."], ["Two one.", "Two two."], ["Three one."], ["Four one."], ["Five one.", "Five two.", "Five three.", "Five four."]]
+    prompts = harvard_prompts(lists)
+    assert [item["id"] for item in prompts["teach"] if item["list"] == 5] == ["h05-01", "h05-02", "h05-04"]
+    assert prompts["lists"][4] == ["Five one.", "Five two.", "Five four."]
 
 
 @pytest.mark.live

@@ -17,21 +17,10 @@ FETCH_TIMEOUT_S = 30
 LIST_PATTERN = re.compile(r"<h2>\s*List\s+(\d+)\s*</h2>\s*<ol>(.*?)</ol>", re.IGNORECASE | re.DOTALL)
 ITEM_PATTERN = re.compile(r"<li>(.*?)(?=<li>|</li>|$)", re.IGNORECASE | re.DOTALL)
 TAG_PATTERN = re.compile(r"<[^>]+>")
-# Harvard sentences he is never asked to read: unkind about speech, bodies or people, or violent.
-SKIPPED_SENTENCES = frozenset({
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
-    "[sentence removed]",
+# Harvard sentences he is never asked to read (unkind about speech, bodies or people, or violent), by list and place.
+SKIPPED_IDS = frozenset({
+    "h05-03", "h10-05", "h11-02", "h11-06", "h12-09", "h19-05", "h27-04",
+    "h30-01", "h51-02", "h55-07", "h59-02", "h72-01", "h72-07",
 })
 
 
@@ -65,9 +54,11 @@ def harvard_prompts(lists: list[list[str]]) -> dict:
         {"id": f"h{number:02d}-{index:02d}", "list": number, "text": text}
         for number, sentences in enumerate(lists[1:], start=2)
         for index, text in enumerate(sentences, start=1)
-        if text not in SKIPPED_SENTENCES
+        if f"h{number:02d}-{index:02d}" not in SKIPPED_IDS
     ]
-    return {"source": HARVARD_URL, "lists": lists, "test": test, "teach": teach}
+    # The stored lists leave the skipped sentences out too, so they are never kept anywhere.
+    kept = [lists[0]] + [[item["text"] for item in teach if item["list"] == number] for number in range(2, len(lists) + 1)]
+    return {"source": HARVARD_URL, "lists": kept, "test": test, "teach": teach}
 
 
 def build_prompts() -> dict:
