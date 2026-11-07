@@ -1,4 +1,4 @@
-"""Which clips train and which test (spec 7.3, 9.3, 15.1): selection rules, the frozen test set and the overlap check."""
+"""Which clips train and which test: selection rules, the frozen test set and the overlap check."""
 
 import hashlib
 import json
@@ -23,7 +23,7 @@ class OverlapError(AssertionError):
 
 
 def is_trainable(clip: ClipRecord) -> bool:
-    """Spec 7.3: ok, split train, not excluded, trust read, explicit or reviewed."""
+    """Ok, split train, not excluded, trust read, explicit or reviewed."""
     return clip.ok and clip.split == "train" and not clip.excluded and clip.trust in TRAINABLE_TRUST
 
 

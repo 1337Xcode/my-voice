@@ -1,4 +1,4 @@
-"""The next Teach prompt, in the spec's order: his phrases twice each, then Harvard lists 2 onward (spec 9.5, 10)."""
+"""The next Teach prompt, in order: his phrases twice each, then Harvard lists 2 onward."""
 
 from voice.clips.records import ClipRecord, load_clips
 from voice.config import ASSETS_ROOT

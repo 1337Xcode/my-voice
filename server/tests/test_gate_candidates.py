@@ -1,4 +1,4 @@
-"""Candidate merging and de-duplication (spec 8.5)."""
+"""Candidate merging and de-duplication."""
 
 from voice.gate.candidates import Hypothesis, MemoryHit, PhraseMatch, build_candidates, normalise
 

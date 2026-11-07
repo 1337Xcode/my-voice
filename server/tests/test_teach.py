@@ -1,4 +1,4 @@
-"""Checks Teach's prompt order (spec 9.5), the phrase test hold-out, and Review verdicts (9.2) on real files."""
+"""Checks Teach's prompt order, the phrase test hold-out, and Review verdicts (9.2) on real files."""
 
 import numpy as np
 import pytest

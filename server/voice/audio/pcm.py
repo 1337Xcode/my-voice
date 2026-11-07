@@ -7,7 +7,7 @@ import numpy as np
 import soundfile as sf
 
 SAMPLE_RATE = 16_000
-# Silence kept on each side of a clip when it is trimmed for storage (spec 7.1).
+# Silence kept on each side of a clip when it is trimmed for storage.
 EDGE_SILENCE_S = 0.2
 
 

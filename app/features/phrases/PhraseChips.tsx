@@ -1,4 +1,4 @@
-/** His most-used phrases as large chips on Talk; one tap speaks one (spec 11.3 Idle). */
+/** His most-used phrases as large chips on Talk; one tap speaks one. */
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';

@@ -1,4 +1,4 @@
-"""HTTP and WebSocket routes for calls: his call link, phone calls, the guest socket and Twilio's webhooks (spec 12.2, 13)."""
+"""HTTP and WebSocket routes for calls: his call link, phone calls, the guest socket and Twilio's webhooks."""
 
 import asyncio
 

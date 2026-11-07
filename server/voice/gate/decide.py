@@ -1,4 +1,4 @@
-"""The decision gate: asks TypeSafe Jev or OpenAI Decisions which candidate he said (spec 8.6, API-NOTES 1 and 6)."""
+"""The decision gate: asks TypeSafe Jev or OpenAI Decisions which candidate he said (API-NOTES 1 and 6)."""
 
 import asyncio
 import hashlib

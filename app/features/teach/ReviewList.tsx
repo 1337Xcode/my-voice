@@ -1,4 +1,4 @@
-/** Teach › Review: everyday sentences spoken without a check, each approved, rejected or corrected in one tap (spec 9.2). */
+/** Teach › Review: everyday sentences spoken without a check, each approved, rejected or corrected in one tap. */
 import { Check, Pencil, Play, X } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';

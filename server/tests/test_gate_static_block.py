@@ -1,4 +1,4 @@
-"""The static prefix and the articulation note measured from corrections (spec 8.6)."""
+"""The static prefix and the articulation note measured from corrections."""
 
 import pytest
 

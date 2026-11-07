@@ -1,4 +1,4 @@
-"""Turns any recording into the stored clip format: 16 kHz mono 16-bit wav, peak-normalised, edges trimmed (spec 7.1)."""
+"""Turns any recording into the stored clip format: 16 kHz mono 16-bit wav, peak-normalised, edges trimmed."""
 
 import subprocess
 from pathlib import Path

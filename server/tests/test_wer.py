@@ -1,4 +1,4 @@
-"""WER and words understood, with literal expected values (spec 15.2)."""
+"""WER and words understood, with literal expected values."""
 
 import pytest
 

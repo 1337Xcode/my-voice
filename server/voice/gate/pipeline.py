@@ -1,4 +1,4 @@
-"""One turn through the gate: candidates, round 1 with repair in parallel, round 2, act (spec 8.5 to 8.8), and learning (9.1)."""
+"""One turn through the gate: candidates, round 1 with repair in parallel, round 2, act, and learning (9.1)."""
 
 import asyncio
 import time
@@ -117,5 +117,5 @@ async def run_gate(speaker: str, nbest: list[Hypothesis], phrase_result: list[Ph
 
 
 def learn_from_choice(speaker: str, heard: str, nbest: list[str], meant: str, source: str) -> dict:
-    """Records what he meant (spec 9.1): source pick, typed or review for corrections, spoken for an unchallenged sentence."""
+    """Records what he meant: source pick, typed or review for corrections, spoken for an unchallenged sentence."""
     return add_pair(speaker, heard, nbest, meant, source)

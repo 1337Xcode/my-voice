@@ -1,4 +1,4 @@
-"""His data (spec 11.7, 16): export everything as a zip, or delete everything, models included."""
+"""His data: export everything as a zip, or delete everything, models included."""
 
 import asyncio
 import io

@@ -1,4 +1,4 @@
-"""The Results screen's data (spec 15.3): words understood per system, learning over versions, live use, calibration."""
+"""The Results screen's data: words understood per system, learning over versions, live use, calibration."""
 
 import csv
 import io

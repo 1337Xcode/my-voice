@@ -1,4 +1,4 @@
-/** Results (spec 15.3): words understood per system, learning over versions, live use, the gate's calibrated point, and one footnote. */
+/** Results: words understood per system, learning over versions, live use, the gate's calibrated point, and one footnote. */
 import { router, Stack } from 'expo-router';
 import type { ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -13,7 +13,7 @@ import { percent, shortVersion } from '@/features/teach/ModelCard';
 import { resultsSchema, type HeadlineRow, type Results } from '@/features/teach/teachApi';
 import { colors, radius, space } from '@/theme';
 
-/** The rows the spec always shows, in reading order, with a dash where nothing is measured yet. */
+/** The rows the screen always shows, in reading order, with a dash where nothing is measured yet. */
 function headlineRows(results: Results): HeadlineRow[] {
   // The server names rows for the evaluation write-up ("His model v2"); on his phone it is his own.
   const rows = results.headline.map((r) => ({ ...r, system: r.system.replace(/^His model/, 'Your model') }));

@@ -1,12 +1,12 @@
 """Chooses training settings for one speaker by 5-fold cross-validation on his training clips only (never the test set).
 
-Each fold trains the standard trainer (spec 9.3) from the base model on 4/5 of his trainable clips, then decodes the
+Each fold trains the standard trainer from the base model on 4/5 of his trainable clips, then decodes the
 held-out 1/5 exactly as serving does (`voice.asr.whisper`), clean and mixed with babble at 5 and 0 dB. A variant changes
 one trainer setting; its score is the mean over those three conditions of the pooled WER on all held-out clips.
 
 Run: cd server && modal run scripts_train_cv.py --speaker S1 --variants default,rank16 --seeds 1234
 Per-clip results are appended to .work/train_cv_<speaker>.jsonl (git-ignored) and the scores printed.
-`patience3` is the spec's 9.3 setting (patience 3, 15 epochs); the trainer now defaults to patience 5 and 25 epochs.
+`patience3` is the original setting (patience 3, 15 epochs); the trainer now defaults to patience 5 and 25 epochs.
 """
 
 import json

@@ -14,7 +14,7 @@ were already in `speech-data/S1/incoming/`. No listener, test-log or other-syste
 | Split | Condition | Clips | Sentences |
 | --- | --- | --- | --- |
 | train | quiet | 50 | Harvard lists 2-6, each once |
-| test | quiet | 10 | Harvard list 1 (spec 11.9) |
+| test | quiet | 10 | Harvard list 1 |
 | test | noisy_real | 4 | List 1 sentences 1-4, a second, separate take |
 | test | babble_5db, babble_0db | 10 each | The quiet test takes mixed with the babble bank (fixed seed per clip) |
 
@@ -40,5 +40,5 @@ were already in `speech-data/S1/incoming/`. No listener, test-log or other-syste
 | The Data sheet had list 1 (`r31`-`r40`) in train while 4 of those sentences were the noisy test set: a train/test leak | The repo's `clips.csv` already moves list 1 to test; used as is. Nothing left to exclude from training |
 | `ok` was blank in the Data sheet and set to `yes` with "confirm with Data" | All 64 kept: no defect found. Data should still confirm by listening |
 | `S1_r084` (train) has the most background noise (SNR estimate 6.5 dB) | Kept; real noise in a training clip does no harm |
-| `noisy_real` has 4 clips, and their noise floor measures like the quiet takes (about -42 dBFS) | Kept as the spec's condition; read it as "a second take", and always quote n |
+| `noisy_real` has 4 clips, and their noise floor measures like the quiet takes (about -42 dBFS) | Kept as its own condition; read it as "a second take", and always quote n |
 | Test takes are about 5 dB louder at source than training takes | No action: import peak-normalises every clip |

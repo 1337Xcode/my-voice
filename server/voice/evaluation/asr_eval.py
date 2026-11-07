@@ -1,4 +1,4 @@
-"""WER per model version per test condition (spec 15.1, 15.2), decoded exactly as serving decodes."""
+"""WER per model version per test condition, decoded exactly as serving decodes."""
 
 import time
 from pathlib import Path

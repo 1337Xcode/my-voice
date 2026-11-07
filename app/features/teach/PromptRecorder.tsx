@@ -1,4 +1,4 @@
-/** One sentence to read aloud, in very large text, with Record and Stop, Play back, Keep or Redo, and Skip (spec 11.5). */
+/** One sentence to read aloud, in very large text, with Record and Stop, Play back, Keep or Redo, and Skip. */
 import { Mic, Play, Square } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';

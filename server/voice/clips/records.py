@@ -1,4 +1,4 @@
-"""Clip records (spec 7.3): the team CSV's eight columns plus ours, stored append-only per speaker."""
+"""Clip records: the team CSV's eight columns plus ours, stored append-only per speaker."""
 
 import time
 from pathlib import Path

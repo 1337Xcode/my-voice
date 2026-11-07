@@ -1,4 +1,4 @@
-"""Scoring a new version against the active one and promoting it only when spec 9.3's rule says it is better."""
+"""Scoring a new version against the active one and promoting it only when the promotion rule says it is better."""
 
 import logging
 import time

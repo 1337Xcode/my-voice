@@ -1,4 +1,4 @@
-"""Whisper large-v3-turbo on CTranslate2: the same n-best, guards and adapter swaps as voice.asr.whisper, several times faster (spec 8.4A).
+"""Whisper large-v3-turbo on CTranslate2: the same n-best, guards and adapter swaps as voice.asr.whisper, several times faster.
 
 The public API and its semantics match `voice.asr.whisper.Whisper`. A LoRA adapter is merged into the base model and
 converted to CTranslate2 float16 once, cached in `<adapter>/ct2/`. The stock model stays loaded for `stock=True`.
@@ -96,7 +96,7 @@ class CT2Whisper:
         return result.hypotheses[0].text if result.hypotheses else ""
 
     def greedy(self, audio: np.ndarray) -> str:
-        """A fast greedy decode for live partial words (spec 8.10)."""
+        """A fast greedy decode for live partial words."""
         with self.lock:
             result = self.model.generate(self._features(audio), [self.prompt], beam_size=1, max_length=max_length_for(GREEDY_MAX_NEW_TOKENS))[0]
         return self.processor.decode(result.sequences_ids[0], skip_special_tokens=True).strip()

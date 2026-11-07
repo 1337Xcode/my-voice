@@ -1,4 +1,4 @@
-"""Promotion rule (spec 9.3), registry naming, babble mixing at a set SNR, speed change, and the Harvard lists."""
+"""Promotion rule, registry naming, babble mixing at a set SNR, speed change, and the Harvard lists."""
 
 import numpy as np
 import pytest

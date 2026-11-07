@@ -1,4 +1,4 @@
-"""Turns gate probabilities into speak, pick or again, never speaking below the threshold (spec 8.8)."""
+"""Turns gate probabilities into speak, pick or again, never speaking below the threshold."""
 
 from dataclasses import dataclass
 

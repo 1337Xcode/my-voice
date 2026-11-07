@@ -16,7 +16,7 @@ from voice.storage import models_dir, read_json, speaker_dir, write_json
 
 log = logging.getLogger("voice.runtime")
 
-# Pipeline settings and their defaults (spec 8.2, 8.8, 11.7); the app changes them through /settings.
+# Pipeline settings and their defaults; the app changes them through /settings.
 DEFAULT_SETTINGS = {
     "voice_id": None,
     "before_speaking": "speak",

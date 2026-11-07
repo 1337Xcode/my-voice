@@ -1,4 +1,4 @@
-"""Phrase matcher (spec 8.4B): speaker-dependent DTW template matching on WavLM features, no training needed.
+"""Phrase matcher: speaker-dependent DTW template matching on WavLM features, no training needed.
 
 A phrase is matched by comparing the utterance's frame features with every saved recording ("template") of every
 phrase. A phrase's distance is its closest template. The best distance is accepted only if it is below a threshold

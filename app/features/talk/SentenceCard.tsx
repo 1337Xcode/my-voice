@@ -1,4 +1,4 @@
-/** The sentence in very large type facing the listener (spec 11.3): never scrolls; long speech is paged; Flip turns it 180°. */
+/** The sentence in very large type facing the listener: never scrolls; long speech is paged; Flip turns it 180°. */
 import { ChevronLeft, ChevronRight, RefreshCcw } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { ReactNode, useEffect, useMemo, useState } from 'react';

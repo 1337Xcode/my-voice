@@ -1,4 +1,4 @@
-/** The Teach, Review, training and Results routes (spec 12.2), each validated with zod before a screen uses it. */
+/** The Teach, Review, training and Results routes, each validated with zod before a screen uses it. */
 import { fetch as expoFetch } from 'expo/fetch';
 import { File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
@@ -95,7 +95,7 @@ export async function fetchParsed<T>(settings: Settings, path: string, schema: z
   return parsed.data;
 }
 
-/** His verdict on one everyday turn in Review (spec 9.2). */
+/** His verdict on one everyday turn in Review. */
 export function sendReview(settings: Settings, turnId: string, action: 'approve' | 'reject' | 'edit', text?: string): Promise<unknown> {
   return api(settings, withSpeaker(settings, `/review/${encodeURIComponent(turnId)}`), { method: 'POST', body: JSON.stringify({ action, text }) });
 }
@@ -115,7 +115,7 @@ export function clipAudio(settings: Settings, clipId: string): Promise<ArrayBuff
   return api<ArrayBuffer>(settings, withSpeaker(settings, `/clips/${encodeURIComponent(clipId)}/audio`), {}, 'bytes');
 }
 
-/** Freezes his test set after the onboarding test sentences (spec 10 step 4). */
+/** Freezes his test set after the onboarding test sentences. */
 export function freezeTestSet(settings: Settings): Promise<unknown> {
   return api(settings, withSpeaker(settings, '/teach/freeze'), { method: 'POST' });
 }

@@ -1,4 +1,4 @@
-/** Haptic feedback on Listening start, result, Learned and errors (spec 11.10); silent on web. */
+/** Haptic feedback on Listening start, result, Learned and errors; silent on web. */
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 

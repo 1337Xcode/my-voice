@@ -1,4 +1,4 @@
-"""eval_pipeline (spec 15.4): replays every test clip through the whole turn and calibrates the speak threshold."""
+"""eval_pipeline: replays every test clip through the whole turn and calibrates the speak threshold."""
 
 import asyncio
 import time
@@ -13,7 +13,7 @@ from voice.gate.candidates import Hypothesis, PhraseMatch
 from voice.gate.pipeline import run_gate
 from voice.storage import speaker_dir, write_json
 
-# A spoken sentence counts as wrong when its WER against the reference is over 10% (spec 15.4).
+# A spoken sentence counts as wrong when its WER against the reference is over 10%.
 WRONG_WER = 10.0
 MAX_WRONG_SPOKEN = 0.02
 THRESHOLDS = [round(0.50 + 0.02 * step, 2) for step in range(25)]  # 0.50 .. 0.98

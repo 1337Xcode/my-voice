@@ -1,4 +1,4 @@
-/** Keeps the app in step with his toolkit profile (spec 14): reads it on launch and on every profile event, writes his changes back. */
+/** Keeps the app in step with his toolkit profile: reads it on launch and on every profile event, writes his changes back. */
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import { saveServerSetting } from '@/features/teach/teachApi';

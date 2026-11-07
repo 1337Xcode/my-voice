@@ -82,7 +82,7 @@ def whisper_loader():
 
 @app.function(image=jobs_image, volumes=VOLUMES, timeout=JOB_TIMEOUT_S, cpu=4, memory=8192)
 def build_noise_bank_job() -> dict:
-    """Spec 9.4: downloads LibriSpeech dev-clean and writes 20 babble tracks to _shared/noise/babble/."""
+    """Downloads LibriSpeech dev-clean and writes 20 babble tracks to _shared/noise/babble/."""
     import tempfile
 
     from voice.training.babble import build_babble_bank, download_librispeech
@@ -96,7 +96,7 @@ def build_noise_bank_job() -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, timeout=300)
 def build_prompts_job() -> dict:
-    """Spec 9.5: fetches the 72 Harvard lists and writes them and the default phrases to _shared/prompts/."""
+    """Fetches the 72 Harvard lists and writes them and the default phrases to _shared/prompts/."""
     from voice.training.prompts import build_prompts
 
     start_job()
@@ -107,7 +107,7 @@ def build_prompts_job() -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, timeout=JOB_TIMEOUT_S, cpu=4)
 def import_team_job(speaker: str, staged: str = "") -> dict:
-    """Spec 12.3: imports the team's clips (the volume layout, or a staged hack-speech folder), re-freezes the test set
+    """Imports the team's clips (the volume layout, or a staged hack-speech folder), re-freezes the test set
     and writes the synthetic babble test audio."""
     import shutil
     from dataclasses import asdict
@@ -130,7 +130,7 @@ def import_team_job(speaker: str, staged: str = "") -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, secrets=[secret], gpu=EVAL_GPU, timeout=JOB_TIMEOUT_S)
 def eval_asr_job(speaker: str) -> dict:
-    """Spec 12.3 eval_asr: WER per version per condition, plus stock, on the frozen test set."""
+    """WER per version per condition, plus stock, on the frozen test set."""
     from voice.evaluation.asr_eval import eval_asr
 
     start_job()
@@ -141,7 +141,7 @@ def eval_asr_job(speaker: str) -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, secrets=[secret], gpu=EVAL_GPU, timeout=JOB_TIMEOUT_S)
 def register_adapter_job(name: str, speaker: str) -> dict:
-    """Spec 12.3 register_adapter: adopts speech-models/<name> as a new version, promoted only if better."""
+    """Adopts speech-models/<name> as a new version, promoted only if better."""
     from voice.training.improve import register_adapter
 
     start_job()
@@ -150,7 +150,7 @@ def register_adapter_job(name: str, speaker: str) -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, secrets=[secret], gpu=EVAL_GPU, timeout=JOB_TIMEOUT_S)
 def decide_version_job(speaker: str, name: str) -> dict:
-    """Scores a freshly trained version on the serving GPU type and promotes it if better (spec 9.3)."""
+    """Scores a freshly trained version on the serving GPU type and promotes it if better."""
     from voice.training.improve import decide_version
 
     start_job()
@@ -159,7 +159,7 @@ def decide_version_job(speaker: str, name: str) -> dict:
 
 @app.function(image=jobs_image, volumes=VOLUMES, secrets=[secret], gpu=TRAIN_GPU, timeout=JOB_TIMEOUT_S, max_containers=1)
 def train_job(speaker: str) -> dict:
-    """Spec 9.3 Improve now: trains on the L40S, then scores on an A10G like serving, reporting progress in train_status.json."""
+    """Improve now: trains on the L40S, then scores on an A10G like serving, reporting progress in train_status.json."""
     from voice.training.improve import train_new_version
     from voice.training.registry import mark_failed, write_status
 
@@ -180,7 +180,7 @@ def train_job(speaker: str) -> dict:
 
 @app.function(image=pipeline_image, volumes=VOLUMES, secrets=[secret], gpu=EVAL_GPU, timeout=JOB_TIMEOUT_S)
 def eval_pipeline_job(speaker: str, providers: list[str]) -> dict:
-    """Spec 15.4: replays the frozen test set through recognisers and gate per provider and calibrates speak_threshold."""
+    """Replays the frozen test set through recognisers and gate per provider and calibrates speak_threshold."""
     import asyncio
 
     from voice.evaluation.pipeline_eval import eval_pipeline

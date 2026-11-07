@@ -1,4 +1,4 @@
-"""Word error rate exactly as spec 15.2 defines it: jiwer after Whisper's English normaliser on both sides."""
+"""Word error rate: jiwer after Whisper's English normaliser on both sides."""
 
 import json
 from functools import lru_cache
@@ -46,5 +46,5 @@ def clip_wer_percent(reference: str, hypothesis: str) -> float:
 
 
 def words_understood(wer: float) -> float:
-    """Spec 15.2: 100 minus WER, clamped to 0..100."""
+    """100 minus WER, clamped to 0..100."""
     return round(min(100.0, max(0.0, 100.0 - wer)), 2)

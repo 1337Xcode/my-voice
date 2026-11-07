@@ -1,4 +1,4 @@
-"""Correction memory: similarity, recurring pairs and the lookup thresholds (spec 7.5, 8.4C, 9.1)."""
+"""Correction memory: similarity, recurring pairs and the lookup thresholds."""
 
 import pytest
 

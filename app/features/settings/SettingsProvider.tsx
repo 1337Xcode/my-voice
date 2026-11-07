@@ -14,9 +14,9 @@ export type Settings = {
   voiceId: string | null;
   /** The chosen microphone; null for the system default. */
   micDeviceId: string | null;
-  /** AAA text contrast (spec 11.10). */
+  /** AAA text contrast. */
   highContrast: boolean;
-  /** Motion off even when the system allows it (spec 11.10). */
+  /** Motion off even when the system allows it. */
   reduceMotion: boolean;
   /** How fast his voice speaks, 0.7 to 1.2 (server side). */
   speechRate: number;
@@ -55,7 +55,7 @@ export const defaultSettings: Settings = {
   },
 };
 
-/** The pipeline settings the server keeps (spec 12.2 `POST /settings`), with its field names. */
+/** The pipeline settings the server keeps, with its field names. */
 export function serverSettingsOf(settings: Settings) {
   return {
     voice_id: settings.voiceId ?? undefined,

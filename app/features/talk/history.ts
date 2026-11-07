@@ -1,4 +1,4 @@
-/** The last 50 things he said, kept on the phone (spec 11.1) for the conversation strip. */
+/** The last 50 things he said, kept on the phone for the conversation strip. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const KEY = 'turns.v1';

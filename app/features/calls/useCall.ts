@@ -1,4 +1,4 @@
-/** A call he is in (spec 13): follows its status, collects the other person's captions, hangs up. */
+/** A call he is in: follows its status, collects the other person's captions, hangs up. */
 import { useCallback, useEffect, useState } from 'react';
 
 import { api } from '@/features/connection/api';

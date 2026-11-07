@@ -1,4 +1,4 @@
-"""Repair's request shape and output checks (spec 8.7); the live call is in test_gate_live.py."""
+"""Repair's request shape and output checks; the live call is in test_gate_live.py."""
 
 import json
 

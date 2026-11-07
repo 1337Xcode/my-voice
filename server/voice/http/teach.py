@@ -1,4 +1,4 @@
-"""Routes for Teach: recordings, clip edits, the next prompt, Review, and retraining (spec 12.2)."""
+"""Routes for Teach: recordings, clip edits, the next prompt, Review, and retraining."""
 
 import asyncio
 from pathlib import Path

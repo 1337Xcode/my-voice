@@ -1,4 +1,4 @@
-/** His phrases' voice clips kept on the device (spec 8.9, 11.4), so one tap plays in under 0.3 s, offline too. */
+/** His phrases' voice clips kept on the device, so one tap plays in under 0.3 s, offline too. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Directory, File, Paths } from 'expo-file-system';
 import { Platform } from 'react-native';
@@ -9,7 +9,7 @@ import type { Settings } from '@/features/settings/SettingsProvider';
 const INDEX_KEY = 'phraseAudio.v1';
 // Browser Cache Storage bucket that holds the clips on web.
 const WEB_CACHE = 'phrase-audio-v1';
-/** The format the app plays (spec 8.9). */
+/** The format the app plays. */
 export const APP_FORMAT = 'mp3_44100_128';
 
 /** File names already on the device. */

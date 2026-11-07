@@ -1,4 +1,4 @@
-"""The speaker gate for hands-free mode (spec 8.3): is this segment him, or someone else nearby?
+"""The speaker gate for hands-free mode: is this segment him, or someone else nearby?
 
 Uses WavLM base+ speaker-verification x-vectors (see DECISIONS: SpeechBrain ECAPA needs a torchaudio that doesn't
 support our torch). His enrolment centroid comes from 10+ of his clips; the threshold rejects at most 1% of his own.
@@ -16,7 +16,7 @@ from voice.storage import read_json, speaker_dir, write_json
 
 SV_MODEL = "microsoft/wavlm-base-plus-sv"
 MIN_ENROLMENT_CLIPS = 10
-# At most this share of his own segments may be rejected as "someone else" (spec 8.3).
+# At most this share of his own segments may be rejected as "someone else".
 MAX_SELF_REJECTION = 0.01
 MAX_ENROLMENT_CLIPS = 60
 

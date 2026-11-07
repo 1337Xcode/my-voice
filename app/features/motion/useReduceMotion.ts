@@ -1,4 +1,4 @@
-/** Whether the system asks for reduced motion; all motion in the app is off when it does (spec 11.10). */
+/** Whether the system asks for reduced motion; all motion in the app is off when it does. */
 import { useEffect, useState } from 'react';
 import type { MotiTransitionProp } from 'moti';
 import { AccessibilityInfo } from 'react-native';

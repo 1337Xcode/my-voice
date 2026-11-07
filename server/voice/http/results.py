@@ -1,4 +1,4 @@
-"""Routes for the Results screen and re-running evaluation (spec 12.2, 15.3)."""
+"""Routes for the Results screen and re-running evaluation."""
 
 import asyncio
 

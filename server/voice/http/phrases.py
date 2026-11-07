@@ -1,4 +1,4 @@
-"""Routes for the phrase bank, the voice list and cached phrase audio (spec 12.2)."""
+"""Routes for the phrase bank, the voice list and cached phrase audio."""
 
 import asyncio
 import base64

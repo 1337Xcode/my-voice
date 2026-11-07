@@ -1,4 +1,4 @@
-"""The clear voice: ElevenLabs Flash v2.5 streaming TTS with an on-volume cache (spec 8.9)."""
+"""The clear voice: ElevenLabs Flash v2.5 streaming TTS with an on-volume cache."""
 
 import asyncio
 import hashlib

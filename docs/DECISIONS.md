@@ -1,6 +1,6 @@
 # Decisions
 
-Every choice the build made that the spec didn't fix, and every place it differs from the spec, with why.
+Every choice the build made and every place it differs from the original design, with why.
 Sources for API facts are in `docs/API-NOTES.md`.
 
 ## Repository and process
@@ -9,7 +9,7 @@ Sources for API facts are in `docs/API-NOTES.md`.
   `speech-data/P1/clips.csv` (columns `id,speaker,text,file,split,condition,ok,notes`, ids like `P1_r001`, `P1_t01`,
   `ok` as `yes`/`no`, `file` like `practice/P1_r001.m4a`), audio in `speech-data/P1/incoming/` (m4a) and `speech-data/P1/wav/`,
   and a LoRA adapter at `speech-models/p1-test/` (rank 32, alpha 64, q/k/v/out projections, with `train_config.json`).
-  The import and `register_adapter` read these directly. `SPEC.md` moved to `docs/SPEC.md` as section 5 lays out.
+  The import and `register_adapter` read these directly.
 - **Plan files.** `.claude/loop.md` asks for `docs/PLAN.md` and `docs/STATUS.md`; AGENTS.md asks for `.work/plan.md`.
   The plan lives in `docs/PLAN.md` (committed, so teammates see it); `.work/` holds only scratch state.
 - **npm, not pnpm.** Expo with pnpm needs hoisting configuration; npm is the Expo default. `pnpm verify` still runs the same scripts.
@@ -18,16 +18,16 @@ Sources for API facts are in `docs/API-NOTES.md`.
 
 ## Environment
 
-- **Env names follow the user's `.env`.** `ELEVENLABS_VOICE_ID` is read as the spec's `ELEVENLABS_DEFAULT_VOICE_ID` (either works).
+- **Env names follow the user's `.env`.** `ELEVENLABS_VOICE_ID` is read as `ELEVENLABS_DEFAULT_VOICE_ID` (either works).
   `OPENAI_BASE_URL` (EU endpoint), `DECIDE_MODEL=jev-latest`, `PARSE_MODEL=gpt-6-luna` and `TYPESAFE_API_KEY` are honoured.
   `INTERNAL_TOKEN` was added for the trainer → `/internal/reload` call. `APP_TOKEN` and `INTERNAL_TOKEN` were generated.
 - **One Modal secret, synced on deploy.** `npm run deploy` writes the non-empty `.env` values into the secret `my-voice-env`,
   so an unset key reads as missing on the server and fails on first use with its name.
-- **AssemblyAI key is not used in the product.** Spec 16 says his audio goes only to our Modal volumes and his phone.
+- **AssemblyAI key is not used in the product.** His audio goes only to our Modal volumes and his phone.
 
 ## Server
 
-- **GPU A10G for serving** (spec allows A10G or L4): about twice L4's memory bandwidth, which is what decoding latency depends on.
+- **GPU A10G for serving**: about twice L4's memory bandwidth, which is what decoding latency depends on.
   Modal's docs name it `A10`; `A10G` deploys and is accepted.
 - **Session timeout one hour.** A WebSocket is one Modal input; the app reconnects with backoff after the timeout.
 - **Region: Modal's default (us-east).** Warm hello→ready from the UK measured 0.21 to 0.56 s. Revisit if turn latency needs it.
@@ -42,12 +42,12 @@ Sources for API facts are in `docs/API-NOTES.md`.
   React Native, so it is not used in the native app (it is a brand-logo set; the app shows no brand logos).
 - **Motion:** Moti (Framer-Motion-style API on Reanimated, which Expo ships). Framer Motion itself targets the DOM.
 - **Look:** follows the user's reference screens: warm cream background, one deep red accent, big round Stop button,
-  listener-facing Speaking card, numbered pick cards, pinned patience phrase. Four tabs kept, as the spec requires.
+  listener-facing Speaking card, numbered pick cards, pinned patience phrase. Four tabs kept.
 - **Text size:** our scale multiplies the system font scale (React Native's default), so the larger of the two always wins.
 
 ## Recogniser and turn pipeline
 
-- **Beam size 5 (spec), with beam agreement passed to the gate.** Beams often differ only in case or punctuation; they are
+- **Beam size 5, with beam agreement passed to the gate.** Beams often differ only in case or punctuation; they are
   merged after normalisation and the count of beams behind each sentence goes to the gate as evidence ("5 of 5 beams,
   word confidence 99.5%"). 8 beams were tried for more distinct hypotheses: ~800 ms vs ~530 ms on the A10G, so 5 stays.
 - **Encoder reuse for the no-speech check is not possible through Whisper's `generate`** (it needs `input_features`;
@@ -56,7 +56,7 @@ Sources for API facts are in `docs/API-NOTES.md`.
 - **Speculative recognition.** When he pauses 300 ms, recognisers start on the audio so far; if no speech follows, that
   result is used at the end of the turn. Saves up to the 600 ms between the pause and the 900 ms endpoint.
 - **Speaker gate uses WavLM base+ SV x-vectors, not SpeechBrain ECAPA.** SpeechBrain needs `torchaudio`, whose latest
-  release (2.11) is pinned to an older torch than the serving image's 2.15. Same rule as the spec: his centroid from
+  release (2.11) is pinned to an older torch than the serving image's 2.15. Same rule as before: his centroid from
   10+ clips, threshold at the 1st percentile of his own leave-one-out scores.
 - **"Tell the app" uses Jev, not Haiku.** Mapping a request onto a fixed list of allowed changes is a calibrated
   choice with "none of these"; Jev can't invent a setting. Live: "make the text bigger" → text size bigger (p 1.0),
@@ -70,17 +70,17 @@ Sources for API facts are in `docs/API-NOTES.md`.
 
 ## Calls
 
-- **App-to-app calls by code**, beyond the spec's Twilio calls: his app has a 6-digit call code and a share link
+- **App-to-app calls by code**, beyond the Twilio calls: his app has a 6-digit call code and a share link
   (`/c/<code>`); a family member opens it in any browser (iPhone Safari included), taps Call, and his app rings. They
   hear only the clear voice and see each sentence large; he sees their words as captions. Works with no Twilio keys.
-  Twilio phone calls (spec 13) are built too and switch on when the keys are set.
+  Twilio phone calls are built too and switch on when the keys are set.
 
 ## Experiments (EXP-SPEC: lips and realtime voice)
 
 - **A separate Experiments area, all off by default.** The server flags `REALTIME_VOICE` and `LIPS` only make an
   experiment available; he switches each on in Settings → Experiments (stored apart from the core settings under
   `experiments.v1`). With a flag off the server sends nothing new and the app shows no new control; with a flag on
-  but the switch off, every turn runs exactly the core path. The spec's Talk-screen Lips toggle became its own
+  but the switch off, every turn runs exactly the core path. The planned Talk-screen Lips toggle became its own
   "Talk with lips" screen inside Experiments, so the core Talk screen never changes.
 - **The spec's `EXP-SPEC.md` is at the repo root**, not in `docs/`.
 - **Flags pass through the shell at deploy time** (`REALTIME_VOICE=1 LIPS=1 npm run deploy`) as well as from `.env`,
@@ -95,7 +95,7 @@ Sources for API facts are in `docs/API-NOTES.md`.
   audio per chunk; splitting it cut result-to-first-piece from 276–287 ms to 225–246 ms on a UK connection.
 - **R1 caches streamed sentences** like the whole-clip voice does (`tts/<voice>/pcm_24000/<hash>.pcm`): a sentence he
   has said before starts 88–98 ms after the result.
-- **R1 on web builds only, through Web Audio.** `react-native-audio-api` (spec 6) needs a native build, and none can
+- **R1 on web builds only, through Web Audio.** `react-native-audio-api` needs a native build, and none can
   be made yet (no EAS login, Windows machine). The phone runs the web build, so streamed chunks play through one
   `AudioContext`, scheduled back to back; the first tap after switching it on unlocks sound on iOS Safari. If a
   sentence's stream fails before any sound, the whole-clip voice says it instead (real audio, not a stand-in).

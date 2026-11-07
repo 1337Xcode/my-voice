@@ -1,4 +1,4 @@
-/** Where he is in first-run setup (spec 10), kept on the phone so every step can be skipped and resumed from Teach. */
+/** Where he is in first-run setup, kept on the phone so every step can be skipped and resumed from Teach. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useState } from 'react';
 

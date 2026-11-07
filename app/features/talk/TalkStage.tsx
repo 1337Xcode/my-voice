@@ -1,4 +1,4 @@
-/** The middle of Talk: what he and the listener see in each state of a turn (spec 11.3). */
+/** The middle of Talk: what he and the listener see in each state of a turn. */
 import { CircleAlert, MicOff, Volume2, VolumeX, WifiOff } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { ReactNode } from 'react';

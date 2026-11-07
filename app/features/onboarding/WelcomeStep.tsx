@@ -1,4 +1,4 @@
-/** Setup step 1 (spec 10, 16): what is recorded and where it goes, in plain words, and the separate yes or no for learning from conversations. */
+/** Setup step 1: what is recorded and where it goes, in plain words, and the separate yes or no for learning from conversations. */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

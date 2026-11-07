@@ -1,4 +1,4 @@
-/** His call contacts and opening line, stored on the phone only (spec 11.6, 16). */
+/** His call contacts and opening line, stored on the phone only. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CONTACTS_KEY = 'contacts.v1';
@@ -6,7 +6,7 @@ const OPENING_KEY = 'openingLine.v1';
 
 export type Contact = { id: string; name: string; number: string };
 
-/** The numbers that must be called directly (spec 11.6). */
+/** The numbers that must be called directly. */
 const EMERGENCY_NUMBERS = new Set(['999', '112', '911']);
 
 export const EMERGENCY_NOTE = 'Call emergency numbers directly, or use emergencySMS.';

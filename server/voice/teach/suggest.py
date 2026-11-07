@@ -1,4 +1,4 @@
-"""'Sentences like yours' (spec 9.5 step 3): Haiku writes short everyday sentences in his style to record, never on health."""
+"""'Sentences like yours': Haiku writes short everyday sentences in his style to record, never on health."""
 
 import httpx
 from pydantic import BaseModel, ValidationError

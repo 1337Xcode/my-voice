@@ -1,4 +1,4 @@
-/** HTTP calls to the speech server's routes, with timeouts, retries and plain-language errors (spec 12.2). */
+/** HTTP calls to the speech server's routes, with timeouts, retries and plain-language errors. */
 import type { Settings } from '@/features/settings/SettingsProvider';
 
 const TIMEOUT_MS = 15_000;

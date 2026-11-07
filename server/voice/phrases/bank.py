@@ -1,4 +1,4 @@
-"""His phrase bank (spec 7.4): read, seed from the default list, and replace."""
+"""His phrase bank: read, seed from the default list, and replace."""
 
 import json
 import os
@@ -33,7 +33,7 @@ def bank_path(speaker: str) -> Path:
 
 
 def default_bank() -> list[Phrase]:
-    """The spec's default phrases (section 11.8), with stable ids p01, p02, ..."""
+    """The default phrases, with stable ids p01, p02, ..."""
     by_category = json.loads((ASSETS_ROOT / "default_phrases.json").read_text(encoding="utf-8"))
     phrases: list[Phrase] = []
     for category, texts in by_category.items():

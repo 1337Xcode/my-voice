@@ -1,4 +1,4 @@
-"""Checks gate calibration (spec 15.4) with literal replay results."""
+"""Checks gate calibration with literal replay results."""
 
 from voice.evaluation.pipeline_eval import choose_threshold, curve
 

@@ -1,4 +1,4 @@
-"""Core routes: liveness, wake, state, pipeline settings and the trainer's reload call (spec 12.2)."""
+"""Core routes: liveness, wake, state, pipeline settings and the trainer's reload call."""
 
 import asyncio
 import time

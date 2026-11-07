@@ -1,4 +1,4 @@
-"""Checks end-of-speech and speculative-start decisions from per-window speech probabilities (spec 8.2)."""
+"""Checks end-of-speech and speculative-start decisions from per-window speech probabilities."""
 
 from voice.audio.endpointing import TurnAudio
 

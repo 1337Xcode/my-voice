@@ -1,4 +1,4 @@
-/** Setup step 3 (spec 10): his phrase bank, where he deletes, edits or adds phrases by typing; saved with `PUT /phrases`. */
+/** Setup step 3: his phrase bank, where he deletes, edits or adds phrases by typing; saved with `PUT /phrases`. */
 import { Plus, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';

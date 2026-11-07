@@ -1,4 +1,4 @@
-/** Setup step 5 (spec 10): each phrase recorded twice; his first 15 phrases are the minimum to finish. */
+/** Setup step 5: each phrase recorded twice; his first 15 phrases are the minimum to finish. */
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';

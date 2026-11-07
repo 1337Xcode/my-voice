@@ -1,4 +1,4 @@
-"""Clip conversion (spec 7.1): edges trimmed to at most 200 ms of silence, peak-normalised, 16 kHz mono 16-bit wav."""
+"""Clip conversion: edges trimmed to at most 200 ms of silence, peak-normalised, 16 kHz mono 16-bit wav."""
 
 import shutil
 

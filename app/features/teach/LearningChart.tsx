@@ -1,4 +1,4 @@
-/** Words understood by model version as a line chart (spec 15.3); `compact` draws the Teach card's sparkline. */
+/** Words understood by model version as a line chart; `compact` draws the Teach card's sparkline. */
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Line, Polyline, Rect, Text as SvgText } from 'react-native-svg';

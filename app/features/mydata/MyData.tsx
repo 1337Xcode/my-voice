@@ -1,4 +1,4 @@
-/** Settings › My data (spec 11.7 #5, 16): Learn from my conversations, Export everything, Delete everything (type DELETE). */
+/** Settings › My data: Learn from my conversations, Export everything, Delete everything (type DELETE). */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { File, Paths } from 'expo-file-system';
 import { useEffect, useState } from 'react';

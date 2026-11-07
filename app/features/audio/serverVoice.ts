@@ -1,4 +1,4 @@
-/** Asks the server for his voice and waits for the `audio` message that answers (spec 12.1). */
+/** Asks the server for his voice and waits for the `audio` message that answers. */
 import type { SpeechSocket } from '@/features/connection/SpeechSocket';
 import type { AudioMessage, ClientMessage } from '@/features/connection/protocol';
 

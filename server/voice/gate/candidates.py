@@ -1,4 +1,4 @@
-"""Merges recogniser hypotheses, phrase matches, memory and repairs into one de-duplicated candidate set (spec 8.5)."""
+"""Merges recogniser hypotheses, phrase matches, memory and repairs into one de-duplicated candidate set."""
 
 import math
 import re
@@ -26,7 +26,7 @@ BEAMS_SEARCHED = 5
 
 @dataclass(frozen=True)
 class PhraseMatch:
-    """One phrase-bank match from the template matcher (spec 8.4B)."""
+    """One phrase-bank match from the template matcher."""
 
     phrase_id: str
     text: str

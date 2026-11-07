@@ -1,4 +1,4 @@
-"""Phone calls through Twilio (spec 13): number checks, the REST calls, TwiML, webhook signatures and the media stream.
+"""Phone calls through Twilio: number checks, the REST calls, TwiML, webhook signatures and the media stream.
 
 Sources: Twilio's Call resource, TwiML <Stream>, Media Streams WebSocket messages and webhook security pages
 (docs/API-NOTES.md section 4). The callee's audio is decoded in memory for captions and never stored.

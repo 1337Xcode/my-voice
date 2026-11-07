@@ -3,7 +3,7 @@
 import torch
 import torch.nn.functional as F
 
-# Half-width of the band as a share of the longer sequence (spec 8.4B: "a band constraint").
+# Half-width of the band as a share of the longer sequence.
 BAND_RATIO = 0.2
 _BIG = float("inf")
 

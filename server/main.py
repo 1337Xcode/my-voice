@@ -1,4 +1,4 @@
-"""The Modal app: the GPU speech server, its volumes, secret and image (spec section 4).
+"""The Modal app: the GPU speech server, its volumes, secret and image.
 
 Deploy from the repo root with `npm run deploy`, which syncs .env into the Modal secret first.
 """

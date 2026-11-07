@@ -1,4 +1,4 @@
-"""The model registry (spec 7.2): every version with metrics, the active version, the stock baseline, and the promotion rule (9.3).
+"""The model registry: every version with metrics, the active version, the stock baseline, and the promotion rule (9.3).
 
 registry.json: {"speaker", "active": name or null, "stock": {"metrics", "mean_wer", "test_set"},
 "versions": {name: {"version", "path", "source", "created_at", "train_clips", "metrics", "mean_wer", "test_set", "status"}}}.
@@ -10,7 +10,7 @@ from pathlib import Path
 
 from voice.storage import models_dir, read_json, write_json
 
-# Spec 9.3: mean WER must drop by at least this many points, and quiet WER may rise by at most this many.
+# Mean WER must drop by at least this many points, and quiet WER may rise by at most this many.
 MIN_MEAN_GAIN = 0.5
 MAX_QUIET_LOSS = 1.0
 
@@ -32,7 +32,7 @@ def save_registry(registry: dict) -> None:
 
 
 def model_name(speaker: str, version: int) -> str:
-    """Spec 7.2 naming: `<speaker lowercase>-whisper-lora-v<N>`."""
+    """`<speaker lowercase>-whisper-lora-v<N>`."""
     return f"{speaker.lower()}-whisper-lora-v{version}"
 
 
@@ -47,7 +47,7 @@ def active_scores(registry: dict) -> dict | None:
 
 
 def should_promote(candidate: dict, active: dict) -> tuple[bool, str]:
-    """Spec 9.3 on two score entries ({"mean_wer", "metrics": {condition: {"wer"}}}): (promote?, why)."""
+    """The promotion rule on two score entries ({"mean_wer", "metrics": {condition: {"wer"}}}): (promote?, why)."""
     gain = active["mean_wer"] - candidate["mean_wer"]
     if gain < MIN_MEAN_GAIN:
         return False, f"mean WER {candidate['mean_wer']:.2f} vs {active['mean_wer']:.2f}, needs {MIN_MEAN_GAIN} points lower"

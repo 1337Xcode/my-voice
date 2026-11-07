@@ -1,4 +1,4 @@
-"""Trainable-clip rules (spec 7.3), the validation hold-out (9.3), the frozen test set and the overlap check (15.1)."""
+"""Trainable-clip rules, the validation hold-out (9.3), the frozen test set and the overlap check (15.1)."""
 
 import pytest
 

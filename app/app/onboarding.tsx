@@ -1,4 +1,4 @@
-/** First run (spec 10): seven short steps, each skippable, resumable from Teach where he left off. */
+/** First run: seven short steps, each skippable, resumable from Teach where he left off. */
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';

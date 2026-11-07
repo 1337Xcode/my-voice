@@ -1,4 +1,4 @@
-"""Improve now (spec 9.3) and register_adapter (12.3): make or adopt a version, score it, promote it only if better."""
+"""Improve now and register_adapter (12.3): make or adopt a version, score it, promote it only if better."""
 
 import json
 import logging

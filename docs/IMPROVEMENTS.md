@@ -1,9 +1,9 @@
-# Improvements beyond the spec
+# Improvements, measured
 
-Each was kept only after it was measured against the spec's own approach. Numbers are real runs on the deployed
+Each was kept only after it was measured against the original approach. Numbers are real runs on the deployed
 server or on Modal GPUs; "words understood" is 100 minus WER on held-out test sentences, never trained on.
 
-## Personal model for S1 (spec 9.3)
+## Personal model for S1
 
 His personal models, trained on his 50 training clips; 14 more are kept for testing and never trained on. Accuracy
 (100 - WER), scored with the serving decoder (the one he hears):
@@ -16,11 +16,11 @@ His personal models, trained on his 50 training clips; 14 more are kept for test
 | Babble 0 dB (10) | 0.0% | 25.9% | 33.3% |
 
 v2 (longer training) was first promoted on the CTranslate2 decoder's scores. On the serving decoder it is 1.2 points
-worse in quiet, over the spec's 1-point limit, so v1 is active again. The speak threshold (0.80) was calibrated on v1.
+worse in quiet, over the 1-point limit for promotion, so v1 is active again. The speak threshold (0.80) was calibrated on v1.
 
 ## App-to-app calls by code
 
-**What:** besides Twilio phone calls (spec 13), his app has a 6-digit call code and a link. Anyone opens it in a browser
+**What:** besides Twilio phone calls, his app has a 6-digit call code and a link. Anyone opens it in a browser
 (iPhone Safari included), taps Call, and his app rings with an iPhone-style incoming-call screen. They hear only the
 clear voice and see each sentence large; he sees their words as captions; "Working it out…" replaces dead air.
 **Why:** works with no phone numbers, no Twilio account and no cost, and the other person reads his sentences as well
@@ -41,7 +41,7 @@ wrong for him") and a penalty for sentences "from nowhere" were replaced by that
 0.83 / 0.70 / 0.73, while a real two-way confusion stayed correct (0.84 "flat white" vs 0.15 "fat white"). Live P1 turns
 went from "say again" on correct sentences to speaking them at 0.92 and 0.96.
 
-## Gate calibration applied live (spec 15.4, completed)
+## Gate calibration applied live
 
 The replay sets his live speak threshold through the server, so the threshold always matches his current model.
 S1: 0.80 (34 clips; wrong-but-spoken under 2% at or above it). P1: 0.76 for Jev. gpt-6-luna needed 0.98 because its
@@ -74,7 +74,7 @@ His models are re-scored with the new decoder so promotion is judged exactly as 
 pause). Captions now need two speech windows in a row to count as speech, cut long lines at a 300 ms pause, caption
 the last line when the call ends, and log why a caption was dropped (never the words).
 
-## Speech enhancement (spec 18: kept only if his error drops)
+## Speech enhancement
 
 **Question:** does cleaning the microphone audio before Whisper lower his word error, especially with people talking nearby?
 **Answer: no. No enhancer is adopted; Whisper hears the raw audio.** Every denoiser tried made the personal model's error
@@ -82,7 +82,7 @@ higher, most of them much higher, in quiet and in babble. Seen from the numbers:
 remove or smear, and the remaining babble then triggers extra words.
 
 **Method.** Each enhancer cleans every frozen test clip, then the stock model and the speaker's active personal adapter decode
-it exactly as serving does (A10G, beam search). WER is `voice.evaluation.wer` (spec 15.2), corpus WER per condition; "mean WER" is
+it exactly as serving does (A10G, beam search). WER is `voice.evaluation.wer`, corpus WER per condition; "mean WER" is
 the mean over the frozen conditions, as the registry computes it. P1 uses `p1-whisper-lora-v2`, S1 uses `s1-whisper-lora-v1`.
 Test clips: quiet 10 (about 80 reference words, so one word is about 1.3 points), real noisy 4 (S1 only; P1 has none), babble 5 dB 10,
 babble 0 dB 10. The "pooled" columns add 3 extra babble draws (new seeds) of the same 10 sentences, so 40 clips per cell; the draws
@@ -143,7 +143,7 @@ it or damage the target voice; this is why gating cannot help the case that matt
 
 **Caveats.** Small test sets (the quiet cell is 10 sentences); S1's real noisy cell is 4 clips, and it is the only place where a
 front end helped. Worth re-measuring when 20 or more real noisy clips exist (`noisy_real` is built from team `t01n` clips). Krisp and
-Hush (spec 18) are not covered. Build notes for anyone re-running: `deepfilterlib` has no Python 3.12 wheel so the image builds it from
+Hush are not covered. Build notes for anyone re-running: `deepfilterlib` has no Python 3.12 wheel so the image builds it from
 source with Rust and needs `git` (DeepFilterNet's logger calls it); there is no torchaudio for torch 2.15, so SpeechBrain runs on
 torchaudio 2.11 installed without dependencies; DeepFilterNet needs a shim for a removed torchaudio module (`install_torchaudio_shim`).
 
@@ -153,8 +153,8 @@ Image additions: the `apt` and `pip` lines of `enhance_image` in `scripts_enhanc
 
 ## Longer early-stopping patience for small data (S1 v2)
 
-**What:** the trainer's early stopping waits 5 epochs without a validation gain (spec 9.3: 3) and runs up to 25 epochs
-(spec: 15). Everything else in 9.3 is unchanged: training from the base model each time, rank 32, learning rate 1e-4,
+**What:** the trainer's early stopping waits 5 epochs without a validation gain and runs up to 25 epochs
+(was 15). Everything else in training is unchanged: training from the base model each time, rank 32, learning rate 1e-4,
 the same augmentation, the promotion rule and the registry. `server/voice/training/trainer.py`, tested in
 `server/tests/test_training_early_stopping.py`.
 
@@ -167,9 +167,9 @@ were 4 to 20.
 then decodes the 10 held-out clips with the serving recogniser, clean and mixed with babble at 5 and 0 dB. Score: mean of
 the three pooled WERs over all 50 held-out clips. One change at a time, 3 training seeds (1234, 1, 2) for every contender.
 
-| Variant (one change from the spec defaults) | Seeds | CV mean WER per seed | Average |
+| Variant (one change from the original defaults) | Seeds | CV mean WER per seed | Average |
 | --- | --- | --- | --- |
-| Spec defaults (patience 3, 15 epochs) | 3 | 68.5, 62.2, 71.7 | 67.4 |
+| Original defaults (patience 3, 15 epochs) | 3 | 68.5, 62.2, 71.7 | 67.4 |
 | **Patience 5, 25 epochs** | 3 | 56.4, 53.3, 53.4 | **54.3** |
 | Learning rate 2e-4 | 3 | 55.3, 64.1, 53.5 | 57.6 |
 | LoRA rank 64 | 3 | 56.2, 65.7, 55.4 | 59.1 |
@@ -191,7 +191,7 @@ teammate's S1 adapter (it was trained on all 50 training clips, so cross-validat
 **Test result (once, after the choice; promotion rule decided):** words understood on his frozen test set, scored in one
 `eval_asr` run with the current 5-beam serving decode.
 
-| Condition (n clips) | Stock | v1 (spec defaults) | v2 (patience 5) |
+| Condition (n clips) | Stock | v1 | v2 (patience 5) |
 | --- | --- | --- | --- |
 | Quiet (10) | 49.4% | 76.5% | 77.8% |
 | Real noisy (4) | 22.9% | 65.7% | 68.6% |

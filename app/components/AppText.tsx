@@ -12,7 +12,7 @@ const base: Record<TextVariant, { fontSize: number; fontFamily: string; lineHeig
   label: { fontSize: 17, fontFamily: fonts.medium, lineHeight: 22 },
   heading: { fontSize: 22, fontFamily: fonts.semibold, lineHeight: 28 },
   title: { fontSize: 30, fontFamily: fonts.semibold, lineHeight: 36 },
-  // The spoken sentence, facing the listener: 42 pt before his scale (spec 11.3 asks for 32 at least).
+  // The spoken sentence, facing the listener: 42 pt before his scale.
   sentence: { fontSize: 42, fontFamily: fonts.semibold, lineHeight: 50 },
 };
 
@@ -41,7 +41,7 @@ export function AppText({ variant = 'body', tone = 'default', size, unscaled = f
   const scale = unscaled ? 1 : textScales[settings.textSize];
   const spec = base[variant];
   const fontSize = (size ?? spec.fontSize) * scale;
-  // High contrast lifts secondary text to the body colour (AAA, spec 11.10).
+  // High contrast lifts secondary text to the body colour (AAA).
   const colour = settings.highContrast && (tone === 'muted' || tone === 'faint') ? colors.text : toneColour[tone];
   const lineHeight = Math.round(fontSize * (spec.lineHeight / spec.fontSize));
   return <Text {...rest} style={[styles.reset, { fontFamily: spec.fontFamily, fontSize, lineHeight, color: colour }, style]} />;

@@ -1,4 +1,4 @@
-"""Turn records (spec 7.6): every stage's timestamp, the candidates, the action and the outcome."""
+"""Turn records: every stage's timestamp, the candidates, the action and the outcome."""
 
 import time
 from dataclasses import asdict, dataclass, field

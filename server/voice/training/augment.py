@@ -1,4 +1,4 @@
-"""On-the-fly training augmentation (spec 9.3): speed 0.9/1.0/1.1 and, half the time, babble at 0 to 15 dB SNR."""
+"""On-the-fly training augmentation: speed 0.9/1.0/1.1 and, half the time, babble at 0 to 15 dB SNR."""
 
 import numpy as np
 

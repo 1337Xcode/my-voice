@@ -1,4 +1,4 @@
-/** Teach (spec 11.5): his model and Improve now, the next sentence to record, Review, and a link to Results. */
+/** Teach: his model and Improve now, the next sentence to record, Review, and a link to Results. */
 import { router, useFocusEffect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useCallback, useRef } from 'react';

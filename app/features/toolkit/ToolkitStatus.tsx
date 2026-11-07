@@ -1,4 +1,4 @@
-/** The one-line toolkit sync status under Settings (spec 11.7); renders nothing when the toolkit is not configured. */
+/** The one-line toolkit sync status under Settings; renders nothing when the toolkit is not configured. */
 import { AppText } from '@/components/AppText';
 import { useToolkit } from './ToolkitSync';
 

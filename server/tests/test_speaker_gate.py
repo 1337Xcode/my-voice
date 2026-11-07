@@ -1,4 +1,4 @@
-"""Checks the speaker gate's threshold rule (spec 8.3) with literal scores."""
+"""Checks the speaker gate's threshold rule with literal scores."""
 
 from voice.speaker.gate import cosine, threshold_from_self_scores
 

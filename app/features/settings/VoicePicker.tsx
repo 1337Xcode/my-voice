@@ -1,4 +1,4 @@
-/** Settings › Voice (spec 11.7): the server's voices, each with a sample to hear, one selected. */
+/** Settings › Voice: the server's voices, each with a sample to hear, one selected. */
 import { Check, Play } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';

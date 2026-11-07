@@ -1,4 +1,4 @@
-/** Setup steps 6 and 7 (spec 10): Make my model with live status, then Done with his model's score against stock. */
+/** Setup steps 6 and 7: Make my model with live status, then Done with his model's score against stock. */
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 

@@ -1,4 +1,4 @@
-"""Correction memory (spec 7.5, 8.4C, 9.1): what the recogniser heard, what he meant, and how often."""
+"""Correction memory: what the recogniser heard, what he meant, and how often."""
 
 import time
 import uuid
@@ -13,7 +13,7 @@ SOURCES = ("pick", "typed", "review", "spoken")
 # Explicit corrections: he chose or typed the sentence, or approved it in Review.
 EXPLICIT_SOURCES = ("pick", "typed", "review")
 LOOKUP_SIZE = 5
-# A stored sentence becomes a candidate once he has confirmed it this many times (spec 8.4C, 9.1).
+# A stored sentence becomes a candidate once he has confirmed it this many times.
 MIN_CONFIRMATIONS = 2
 # Normalised character similarity a stored 'heard' must reach to vouch for its 'meant' sentence.
 # 0.6 means at most 4 edits in 10 characters: close enough that the same misrecognition recurred,
@@ -72,7 +72,7 @@ def confirmations(pairs: list[dict]) -> dict[str, int]:
 
 
 def lookup(speaker: str, heard_top1: str) -> list[MemoryHit]:
-    """Memory candidates for this turn: confirmed 2+ times and heard similarly to now (spec 8.4C)."""
+    """Memory candidates for this turn: confirmed 2+ times and heard similarly to now."""
     if not normalise(heard_top1):
         return []
     totals = confirmations(load_pairs(speaker))

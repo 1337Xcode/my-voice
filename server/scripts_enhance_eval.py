@@ -1,4 +1,4 @@
-"""Does any speech enhancer lower his word error? (spec 18: kept only if error drops.)
+"""Does any speech enhancer lower his word error?
 
 Runs on a Modal A10G, the serving GPU type. Every enhancer cleans each frozen test clip, then the stock model and the
 speaker's active personal adapter decode it, and WER is scored exactly as the Results screen scores it.

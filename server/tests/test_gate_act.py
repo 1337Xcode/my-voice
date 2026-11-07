@@ -1,4 +1,4 @@
-"""The act step's thresholds (spec 8.8): never speak below speak_threshold."""
+"""The act step's thresholds: never speak below speak_threshold."""
 
 from voice.gate.act import Action, GateSettings, choose_action, is_confident
 

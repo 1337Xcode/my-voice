@@ -1,4 +1,4 @@
-"""Whisper large-v3-turbo with hot-swappable LoRA adapters: n-best decoding with hallucination guards (spec 8.4A)."""
+"""Whisper large-v3-turbo with hot-swappable LoRA adapters: n-best decoding with hallucination guards."""
 
 import threading
 import time
@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 
 BASE_MODEL = "openai/whisper-large-v3-turbo"
-# Beams searched (spec 8.4A). Beams that differ only in case or punctuation are merged and counted as support.
+# Beams searched. Beams that differ only in case or punctuation are merged and counted as support.
 NUM_BEAMS = 5
 NBEST = 5
 # A hypothesis whose text compresses this well is a repetition loop, not speech (OpenAI's own cut-off).
@@ -137,7 +137,7 @@ class Whisper:
         return recognition.hypotheses[0].text if recognition.hypotheses else ""
 
     def greedy(self, audio: np.ndarray) -> str:
-        """A fast greedy decode for live partial words (spec 8.10)."""
+        """A fast greedy decode for live partial words."""
         import torch
 
         with self.lock, torch.inference_mode():

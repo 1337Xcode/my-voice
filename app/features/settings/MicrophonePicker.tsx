@@ -1,4 +1,4 @@
-/** Settings › Microphone (spec 11.7): the inputs the recorder can see, the chosen one marked; system default otherwise. */
+/** Settings › Microphone: the inputs the recorder can see, the chosen one marked; system default otherwise. */
 import { useAudioDevices } from '@siteed/audio-studio';
 import { Check } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';

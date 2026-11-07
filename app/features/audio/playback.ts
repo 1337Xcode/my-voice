@@ -1,4 +1,4 @@
-/** Plays his voice (spec 8.9): MP3 clips from the server through expo-audio, or the phone's voice when offline. */
+/** Plays his voice: MP3 clips from the server through expo-audio, or the phone's voice when offline. */
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer, type AudioStatus } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import * as Speech from 'expo-speech';

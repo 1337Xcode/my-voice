@@ -1,4 +1,4 @@
-/** His phrase bank (spec 11.4): loaded from the server, kept on the phone for offline use, and spoken in one tap. */
+/** His phrase bank: loaded from the server, kept on the phone for offline use, and spoken in one tap. */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';

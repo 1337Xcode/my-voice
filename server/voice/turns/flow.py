@@ -1,4 +1,4 @@
-"""The turn flow for one session: recognise, decide, speak, and record each step's time (spec 8)."""
+"""The turn flow for one session: recognise, decide, speak, and record each step's time."""
 
 import asyncio
 import logging
@@ -83,7 +83,7 @@ class TurnFlow:
         await self.decide(turn)
 
     async def propose_settings(self, turn: Turn) -> None:
-        """'Tell the app': maps his request to an allowed change and asks him to confirm it (spec 14.4)."""
+        """'Tell the app': maps his request to an allowed change and asks him to confirm it."""
         heard = [h.text for h in turn.nbest]
         try:
             mapped = await map_request(self.runtime.client(), heard)
@@ -100,7 +100,7 @@ class TurnFlow:
         await asyncio.to_thread(turn.record.save)
 
     async def is_him(self, turn: Turn) -> bool:
-        """Hands-free: the speaker gate decides whether this segment is his (spec 8.3)."""
+        """Hands-free: the speaker gate decides whether this segment is his."""
         gate = self.runtime.speaker_gate
         if gate is None or turn.audio.too_short():
             return True
@@ -109,7 +109,7 @@ class TurnFlow:
         return mine
 
     async def caption_partner(self, turn: Turn) -> None:
-        """'Them': the other person's speech becomes a caption with the stock model; never spoken, never stored (spec 8.11)."""
+        """'Them': the other person's speech becomes a caption with the stock model; never spoken, never stored."""
         turn.state = "finished"
         if turn.audio.too_short():
             await self.session.send({"type": "ignored", "turn_id": turn.id, "reason": "no_speech"})
@@ -172,7 +172,7 @@ class TurnFlow:
         return result
 
     async def decide(self, turn: Turn) -> None:
-        """Runs the gate (spec 8.5 to 8.8) and acts on it: speak, pick or again."""
+        """Runs the gate and acts on it: speak, pick or again."""
         settings = self.session.settings()
         gate_settings = GateSettings(float(settings["speak_threshold"]), float(settings["pick_threshold"]), settings["before_speaking"] == "check")
         nbest = [GateHypothesis(h.text, h.logprob, h.support) for h in turn.nbest]
@@ -228,7 +228,7 @@ class TurnFlow:
             self.add_to_conversation("me", text)
         await asyncio.to_thread(turn.record.save)
         if ok and outcome == "spoken":
-            # An unchallenged spoken sentence counts toward its frequency (spec 9.1).
+            # An unchallenged spoken sentence counts toward its frequency.
             await self.learn(turn, text, "spoken")
         if ok and self.session.settings().get("learn_from_conversations"):
             await self.keep_audio(turn, text, trust="implicit" if outcome == "spoken" else "explicit")
@@ -253,7 +253,7 @@ class TurnFlow:
         del self.conversation[:-CONVERSATION_TURNS]
 
     async def choose(self, turn_id: str | None, candidate_id: str | None, text: str | None, via: str) -> None:
-        """His explicit choice: speak it (spec 9.1)."""
+        """His explicit choice: speak it."""
         turn = self.recent.get(str(turn_id))
         candidate = turn.candidate(candidate_id) if turn and candidate_id else None
         sentence = (candidate.text if candidate else (text or "")).strip()
@@ -286,7 +286,7 @@ class TurnFlow:
         await self.send_result(turn, "pick", chosen_id=None)
 
     async def learn(self, turn: Turn, meant: str, source: str) -> None:
-        """Adds what he meant to the correction memory (spec 9.1) and shows the Learned note for corrections."""
+        """Adds what he meant to the correction memory and shows the Learned note for corrections."""
         if not turn.nbest:
             return
         heard = turn.nbest[0].text

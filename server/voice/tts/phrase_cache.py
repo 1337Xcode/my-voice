@@ -1,4 +1,4 @@
-"""Pre-synthesises every bank phrase in his voice so phrases play instantly, offline too (spec 8.9)."""
+"""Pre-synthesises every bank phrase in his voice so phrases play instantly, offline too."""
 
 import asyncio
 import logging

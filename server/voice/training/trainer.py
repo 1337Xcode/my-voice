@@ -1,4 +1,4 @@
-"""The LoRA trainer (spec 9.3): Whisper large-v3-turbo plus a fresh rank-32 adapter, trained on his clips with early stopping."""
+"""The LoRA trainer: Whisper large-v3-turbo plus a fresh rank-32 adapter, trained on his clips with early stopping."""
 
 import gc
 import math
@@ -22,7 +22,7 @@ LEARNING_RATE = 1e-4
 WARMUP_STEPS = 10
 EFFECTIVE_BATCH = 16
 MICRO_BATCH = 8
-# Spec 9.3 says 15 and 3. With a validation set of 4 or 5 clips, patience 3 stopped runs at epoch 3 to 5 on noise;
+# Originally 15 and 3. With a validation set of 4 or 5 clips, patience 3 stopped runs at epoch 3 to 5 on noise;
 # 25 and 5 cut cross-validated WER on S1's training clips from 67.4 to 54.3 over 3 seeds (docs/IMPROVEMENTS.md).
 MAX_EPOCHS = 25
 PATIENCE = 5

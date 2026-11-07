@@ -1,4 +1,4 @@
-"""The babble bank (spec 9.4) and mixing speech with babble at a set SNR, for training and the synthetic test sets."""
+"""The babble bank and mixing speech with babble at a set SNR, for training and the synthetic test sets."""
 
 import tarfile
 import zlib

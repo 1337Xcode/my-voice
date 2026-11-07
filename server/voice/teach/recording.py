@@ -1,4 +1,4 @@
-"""Teach recordings and live-turn audio becoming clips (spec 7.3, 9.1, 9.2, 9.5, 10)."""
+"""Teach recordings and live-turn audio becoming clips."""
 
 import re
 import time
@@ -66,7 +66,7 @@ def keep_turn_audio(speaker: str, turn_id: str, audio: np.ndarray, text: str, tr
 
 
 def review_items(speaker: str) -> list[dict]:
-    """Everyday turns waiting for his ✓ or ✗ (spec 9.2), newest first."""
+    """Everyday turns waiting for his ✓ or ✗, newest first."""
     clips = [c for c in load_clips(speaker).values() if c.trust == "implicit" and not c.excluded]
     clips.sort(key=lambda c: c.created_at or 0, reverse=True)
     return [{"turn_id": c.turn_id or c.id, "clip_id": c.id, "text": c.text, "created_at": c.created_at, "duration_s": c.duration_s} for c in clips]

@@ -1,4 +1,4 @@
-/** Message types exchanged with the speech server over /ws (spec section 12.1), validated with zod on arrival. */
+/** Message types exchanged with the speech server over /ws, validated with zod on arrival. */
 import { z } from 'zod';
 
 // realtime_voice and lips are the experiment flags (EXP-SPEC): absent or false keeps the core product unchanged.
@@ -32,7 +32,7 @@ const audio = z.object({
   data: z.string(),
 });
 
-/** One settings change he asked for in his own words ("Tell the app", spec 14.4). */
+/** One settings change he asked for in his own words ("Tell the app"). */
 const settingChange = z.object({ key: z.string(), from: z.unknown().optional(), to: z.unknown(), label: z.string() });
 
 const serverMessage = z.discriminatedUnion('type', [

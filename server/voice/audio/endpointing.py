@@ -1,4 +1,4 @@
-"""Streaming end-of-speech detection with Silero VAD over a turn's incoming frames (spec 8.2)."""
+"""Streaming end-of-speech detection with Silero VAD over a turn's incoming frames."""
 
 from dataclasses import dataclass, field
 
@@ -14,7 +14,7 @@ MIN_SPEECH_MS = 250
 MAX_TURN_S = 30.0
 # After this much silence following speech, recognition starts speculatively (he may well be finished).
 SPECULATE_AFTER_MS = 300
-# Live partial words: first after 1 s of audio, then every 700 ms (spec 8.10).
+# Live partial words: first after 1 s of audio, then every 700 ms.
 PARTIAL_FIRST_SAMPLES = SAMPLE_RATE
 PARTIAL_EVERY_SAMPLES = SAMPLE_RATE * 7 // 10
 
@@ -111,5 +111,5 @@ class TurnAudio:
         return whole[max(0, first - pad) : min(whole.size, last + pad)]
 
     def too_short(self) -> bool:
-        """True when less than 250 ms of speech was detected (spec 8.2)."""
+        """True when less than 250 ms of speech was detected."""
         return self.state.speech_ms < MIN_SPEECH_MS

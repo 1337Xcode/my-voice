@@ -1,4 +1,4 @@
-"""One app WebSocket session: the message protocol of spec 12.1, routed to the turn flow and the voice."""
+"""One app WebSocket session: the message protocol, routed to the turn flow and the voice."""
 
 import asyncio
 import base64

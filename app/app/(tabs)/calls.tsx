@@ -1,4 +1,4 @@
-/** Calls: his call code for app-to-app calls, joining someone's call, and phone contacts (on the phone only) (spec 11.6). */
+/** Calls: his call code for app-to-app calls, joining someone's call, and phone contacts (on the phone only). */
 import { router } from 'expo-router';
 import { Phone, Trash2 } from 'lucide-react-native';
 import { z } from 'zod';

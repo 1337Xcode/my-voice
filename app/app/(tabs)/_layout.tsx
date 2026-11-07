@@ -1,4 +1,4 @@
-/** The four tabs: Talk, Phrases, Teach, Calls (spec 11.2), on a pill tab bar. Settings opens from the gear on Talk. */
+/** The four tabs: Talk, Phrases, Teach, Calls, on a pill tab bar. Settings opens from the gear on Talk. */
 import { Tabs } from 'expo-router';
 
 import { PillTabBar } from '@/features/navigation/PillTabBar';

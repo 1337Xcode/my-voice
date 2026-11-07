@@ -1,4 +1,4 @@
-"""'Tell the app' (spec 14.4): maps his spoken request onto one change from a fixed allowed list, with Jev's calibrated choice."""
+"""'Tell the app': maps his spoken request onto one change from a fixed allowed list, with Jev's calibrated choice."""
 
 import httpx
 

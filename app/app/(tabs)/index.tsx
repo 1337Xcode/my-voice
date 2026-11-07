@@ -1,4 +1,4 @@
-/** Talk: the main screen (spec 11.3). One big button at the bottom centre; the middle shows the turn's state. */
+/** Talk: the main screen. One big button at the bottom centre; the middle shows the turn's state. */
 import { Link, router } from 'expo-router';
 import { Check, Keyboard, ScanFace, Settings, SlidersHorizontal, X } from 'lucide-react-native';
 import { MotiView } from 'moti';

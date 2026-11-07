@@ -1,4 +1,4 @@
-"""Teach prompt lists (spec 9.5, 11.9): the 72 Harvard lists fetched from the source page, and the default phrases."""
+"""Teach prompt lists: the 72 Harvard lists fetched from the source page, and the default phrases."""
 
 import html
 import json

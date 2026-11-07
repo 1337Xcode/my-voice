@@ -1,4 +1,4 @@
-"""Reading the team's clips.csv (spec 12.3): their columns and ids unchanged, audio found in the team folder layout."""
+"""Reading the team's clips.csv: their columns and ids unchanged, audio found in the team folder layout."""
 
 from voice.clips.records import ClipRecord
 from voice.clips.team_import import copy_results, find_audio, read_team_rows

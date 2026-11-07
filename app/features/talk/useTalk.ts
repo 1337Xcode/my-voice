@@ -1,4 +1,4 @@
-/** One talk turn, end to end, from the app's side (spec 8, 11.3 and the protocol in 12.1). */
+/** One talk turn, end to end, from the app's side. */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
@@ -29,7 +29,7 @@ export type TalkState =
 
 export type TalkMode = 'talk' | 'call';
 
-// "Taking a moment" appears after 3 s of thinking (spec 11.3); past 25 s the turn has failed.
+// "Taking a moment" appears after 3 s of thinking; past 25 s the turn has failed.
 const SLOW_AFTER_MS = 3_000;
 const GIVE_UP_AFTER_MS = 25_000;
 // The turn audio for a spoken result should arrive within this long.
@@ -58,7 +58,7 @@ function distinct(candidates: Candidate[]): Candidate[] {
   });
 }
 
-/** The turn's timing marks, for `client_timing` (spec 8.12): from the end of speech to text shown and to sound. */
+/** The turn's timing marks, for `client_timing`: from the end of speech to text shown and to sound. */
 type Timing = { turnId: string; endAt: number; textAt: number | null; sent: boolean };
 
 export function useTalk(mode: TalkMode = 'talk') {
@@ -248,7 +248,7 @@ export function useTalk(mode: TalkMode = 'talk') {
 
   useEffect(() => socket?.onMessage(onServerMessage), [socket, onServerMessage]);
 
-  // A turn cut off by a lost connection says so and offers typing (spec 11.11).
+  // A turn cut off by a lost connection says so and offers typing.
   useEffect(() => {
     const s = stateRef.current;
     if (status !== 'ready' && (s.kind === 'listening' || s.kind === 'thinking')) fail('Connection dropped. Say it again, or type it.', s.turnId);
@@ -370,7 +370,7 @@ export function useTalk(mode: TalkMode = 'talk') {
   const sayPhrase = useCallback(
     async (phrase: Phrase) => {
       if (mode === 'call' && socket && online) {
-        // The server plays it into the call (spec 13).
+        // The server plays it into the call.
         socket.send(phrase.pinned && phrase.id.startsWith('local-') ? { type: 'type_and_speak', text: phrase.text } : { type: 'say_phrase', phrase_id: phrase.id });
         showSentence(phrase.text, null, 'remote');
         remember(phrase.text, 'phrase');

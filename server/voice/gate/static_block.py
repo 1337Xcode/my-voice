@@ -1,4 +1,4 @@
-"""The static prompt prefix shared by every gate and repair call: guidance, sound note, phrase bank, vocabulary (spec 8.6)."""
+"""The static prompt prefix shared by every gate and repair call: guidance, sound note, phrase bank, vocabulary."""
 
 from rapidfuzz.distance import Levenshtein
 
@@ -7,7 +7,7 @@ from voice.gate.memory import EXPLICIT_SOURCES, load_pairs
 from voice.phrases.bank import load_bank
 from voice.storage import models_dir, read_json, speaker_dir
 
-# The spec's note (8.6), used until there are enough corrections to measure his own pattern.
+# The default note, used until there are enough corrections to measure his own pattern.
 DEFAULT_NOTE = (
     "The recogniser most often confuses consonants made with the tongue (t, d, n, l, s, z, k, g, r, sh, ch); "
     "vowels and lip sounds (p, b, m, f, v, w) are more reliable."
@@ -92,7 +92,7 @@ def corrections(speaker: str) -> list[tuple[str, str]]:
 
 
 def articulation_note(speaker: str) -> str:
-    """The sound note: the spec default until 30 corrections, then measured from complete blocks of 30."""
+    """The sound note: the default until 30 corrections, then measured from complete blocks of 30."""
     pairs = corrections(speaker)
     usable = len(pairs) - len(pairs) % CORRECTIONS_PER_UPDATE
     return note_from_stats(articulation_stats(pairs[:usable])) if usable else DEFAULT_NOTE

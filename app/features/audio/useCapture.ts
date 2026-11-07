@@ -1,4 +1,4 @@
-/** Live microphone capture (spec 8.1): 16 kHz mono through @siteed/audio-studio, sent as 100 ms PCM frames, with a level meter. */
+/** Live microphone capture: 16 kHz mono through @siteed/audio-studio, sent as 100 ms PCM frames, with a level meter. */
 import { useAudioRecorder, type AudioDataEvent } from '@siteed/audio-studio';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -39,7 +39,7 @@ export function useCapture(): Capture {
     const send = onFrameRef.current;
     if (!activeRef.current || !send) return;
     const samples = toFloat32(event.data);
-    // Half duplex (spec 8.1): while our own voice plays, the recogniser must not hear it.
+    // Half duplex: while our own voice plays, the recogniser must not hear it.
     if (isVoicePlaying()) return;
     for (const frame of assembler.current.push(samples)) send(frame);
     const level = levelOf(samples);

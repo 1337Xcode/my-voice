@@ -1,6 +1,6 @@
 /** PCM helpers for live capture: sample conversion, resampling, 100 ms framing and the input level. */
 
-/** The server's audio format (spec 8.1): 16 kHz mono, 16-bit little-endian, 100 ms per WebSocket frame. */
+/** The server's audio format: 16 kHz mono, 16-bit little-endian, 100 ms per WebSocket frame. */
 export const SAMPLE_RATE_HZ = 16_000;
 export const FRAME_SAMPLES = 1_600;
 export const FRAME_BYTES = FRAME_SAMPLES * 2;

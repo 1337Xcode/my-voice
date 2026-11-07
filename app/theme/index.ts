@@ -1,4 +1,4 @@
-/** The app's visual system: warm cream, white cards, one deep maroon accent, Geist (spec 11.10). */
+/** The app's visual system: warm cream, white cards, one deep maroon accent, Geist. */
 
 /** Colours, all AA on the backgrounds they are used on. Meaning never rests on colour alone. */
 export const colors = {

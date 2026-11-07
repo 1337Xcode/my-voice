@@ -1,4 +1,4 @@
-/** The in-call screen (spec 11.6, 13): who and how long, their live captions and his sentences, his Talk controls, Hang up. */
+/** The in-call screen: who and how long, their live captions and his sentences, his Talk controls, Hang up. */
 import { router, useLocalSearchParams } from 'expo-router';
 import { Keyboard, MessageSquareText, Mic, PhoneOff, Square, X } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';

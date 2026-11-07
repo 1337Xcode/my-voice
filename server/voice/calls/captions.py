@@ -1,6 +1,6 @@
 """Live captions of the other side of a call: VAD segments of their audio, transcribed in order with stock Whisper.
 
-Their audio and the caption text live only in memory; nothing here touches the disk (spec 16).
+Their audio and the caption text live only in memory; nothing here touches the disk.
 """
 
 import asyncio

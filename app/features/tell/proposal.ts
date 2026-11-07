@@ -1,4 +1,4 @@
-/** "Tell the app" (spec 14.4): turns the server's proposed setting changes into plain words and into new settings. */
+/** "Tell the app": turns the server's proposed setting changes into plain words and into new settings. */
 import type { SettingChange } from '@/features/connection/protocol';
 import type { Settings } from '@/features/settings/SettingsProvider';
 import type { TextSize } from '@/theme';

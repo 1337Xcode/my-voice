@@ -1,4 +1,4 @@
-/** Settings (spec 11.7): Before speaking, Text size, Voice, Microphone. Long-press the version line for the developer panel. */
+/** Settings: Before speaking, Text size, Voice, Microphone. Long-press the version line for the developer panel. */
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useState } from 'react';

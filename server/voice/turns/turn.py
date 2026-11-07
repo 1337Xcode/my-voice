@@ -1,4 +1,4 @@
-"""One live turn: its audio, its record, and what was decided (spec 8)."""
+"""One live turn: its audio, its record, and what was decided."""
 
 from dataclasses import dataclass, field
 

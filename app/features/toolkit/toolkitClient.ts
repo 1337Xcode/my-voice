@@ -1,4 +1,4 @@
-/** The toolkit's HTTP service (spec 14.1, API-NOTES §5): Librarian calls and the profile event stream. */
+/** The toolkit's HTTP service (API-NOTES §5): Librarian calls and the profile event stream. */
 import { fetch as expoFetch } from 'expo/fetch';
 import { Platform } from 'react-native';
 

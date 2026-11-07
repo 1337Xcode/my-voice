@@ -1,4 +1,4 @@
-/** The hidden developer panel (spec 11.2): server URL, token, active speaker, thresholds, endpoint silence, partials. */
+/** The hidden developer panel: server URL, token, active speaker, thresholds, endpoint silence, partials. */
 import { useState } from 'react';
 import { Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 

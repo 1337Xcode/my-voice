@@ -1,5 +1,5 @@
 /**
- * Maps the AI for Accessibility toolkit's profile to this app's settings and back (spec 14.2, 14.3 and API-NOTES §5).
+ * Maps the AI for Accessibility toolkit's profile to this app's settings and back (API-NOTES §5).
  * Pure functions with no imports, so `node --test` can run their tests without the app's bundler.
  */
 

@@ -1,4 +1,4 @@
-"""Repair: Claude Haiku rebuilds up to 3 sentences from the n-best list and phrase matches (spec 8.7, API-NOTES 2)."""
+"""Repair: Claude Haiku rebuilds up to 3 sentences from the n-best list and phrase matches (API-NOTES 2)."""
 
 import asyncio
 import json

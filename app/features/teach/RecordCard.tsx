@@ -1,4 +1,4 @@
-/** Teach › Record: the next prompt to read, recorded and kept one at a time, with today's progress (spec 11.5). */
+/** Teach › Record: the next prompt to read, recorded and kept one at a time, with today's progress. */
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';

@@ -1,4 +1,4 @@
-"""Imports the team's recordings (spec 12.3): their clips.csv rows and audio become our clip records."""
+"""Imports the team's recordings: their clips.csv rows and audio become our clip records."""
 
 import csv
 import shutil

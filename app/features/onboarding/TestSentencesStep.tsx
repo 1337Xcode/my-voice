@@ -1,4 +1,4 @@
-/** Setup step 4 (spec 10): the ten test sentences (ta01 to ta10), recorded once each, then the test set is frozen. */
+/** Setup step 4: the ten test sentences (ta01 to ta10), recorded once each, then the test set is frozen. */
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 

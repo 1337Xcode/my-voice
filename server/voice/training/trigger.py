@@ -1,4 +1,4 @@
-"""Starts retraining from the server and relays its progress to the app (spec 9.3 triggers, 12.1 `training`)."""
+"""Starts retraining from the server and relays its progress to the app."""
 
 import asyncio
 import logging
@@ -16,7 +16,7 @@ RUNNING_STATES = ("queued", "training", "evaluating")
 TERMINAL_STATES = ("promoted", "not_better", "failed")
 POLL_EVERY_S = 3.0
 POLL_FOR_S = 20 * 60
-# Automatic retraining: enough new trainable clips, and he hasn't spoken for a while (spec 9.3).
+# Automatic retraining: enough new trainable clips, and he hasn't spoken for a while.
 AUTO_NEW_CLIPS = 20
 AUTO_QUIET_S = 120
 # A "running" status older than this is a crashed job, not a running one.

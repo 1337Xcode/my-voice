@@ -1,4 +1,4 @@
-/** Phrases: his bank by category (spec 11.4); one tap speaks it, from the stored clip when there is one, offline too. */
+/** Phrases: his bank by category; one tap speaks it, from the stored clip when there is one, offline too. */
 import { Volume2 } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
