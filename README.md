@@ -51,17 +51,18 @@ Try it at https://trymyvoice.vercel.app (access code `heard`).
 
 ## How well it understands him
 
-Measured on his test recordings, which no model ever trained on: 10 in a quiet room, 4 with real background noise,
-and the quiet ones again mixed with recorded chatter. Accuracy is the share of words recognised correctly.
+Measured on his 10 test recordings, which no model ever trained on, first as recorded in a quiet room and then mixed
+with recorded chatter. Accuracy is the share of words recognised correctly.
 
 | Condition | Stock Whisper | His model |
 | --- | --- | --- |
 | Quiet room | 48% | 79% |
-| Real background noise | 23% | 66% |
 | Other people talking nearby | 20% | 62% |
 
 The recogniser is only the first step. Its bar for speaking aloud is set on the same test recordings, as the lowest
-bar at which fewer than 2 in 100 spoken sentences are wrong; below it, he picks or says it again. Full numbers, including what was tried and dropped, are in [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md).
+bar at which fewer than 2 in 100 spoken sentences are wrong; below it, he picks or says it again.
+
+Full numbers, including what was tried and dropped, are in [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md).
 
 ## How it works
 
