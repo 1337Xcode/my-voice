@@ -61,10 +61,16 @@ def test_speed_change_shortens_or_lengthens_the_clip():
     assert len(change_speed(audio, 1.0)) == 16_000
 
 
+def test_skipped_sentences_are_left_out_and_ids_keep_their_place():
+    lists = [["Test sentence."], ["Fine one.", "[sentence removed]", "Fine two."]]
+    teach = harvard_prompts(lists)["teach"]
+    assert [item["id"] for item in teach] == ["h02-01", "h02-03"]
+
+
 @pytest.mark.live
 def test_harvard_lists_are_fetched_and_list_one_is_the_test_set():
     prompts = harvard_prompts(fetch_harvard())
     assert len(prompts["lists"]) == 72
     assert prompts["test"][0] == {"id": "ta01", "text": "The birch canoe slid on the smooth planks."}
     assert prompts["test"][9]["text"] == "A large size in stockings is hard to sell."
-    assert len(prompts["teach"]) == 710 and prompts["teach"][0]["list"] == 2
+    assert len(prompts["teach"]) == 697 and prompts["teach"][0]["list"] == 2

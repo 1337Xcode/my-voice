@@ -17,6 +17,22 @@ FETCH_TIMEOUT_S = 30
 LIST_PATTERN = re.compile(r"<h2>\s*List\s+(\d+)\s*</h2>\s*<ol>(.*?)</ol>", re.IGNORECASE | re.DOTALL)
 ITEM_PATTERN = re.compile(r"<li>(.*?)(?=<li>|</li>|$)", re.IGNORECASE | re.DOTALL)
 TAG_PATTERN = re.compile(r"<[^>]+>")
+# Harvard sentences he is never asked to read: unkind about speech, bodies or people, or violent.
+SKIPPED_SENTENCES = frozenset({
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+    "[sentence removed]",
+})
 
 
 def parse_harvard(page: str) -> list[list[str]]:
@@ -41,12 +57,15 @@ def fetch_harvard() -> list[list[str]]:
 
 
 def harvard_prompts(lists: list[list[str]]) -> dict:
-    """The stored form: list 1 is the onboarding test set (ta01..ta10); lists 2+ are Teach prompts."""
+    """The stored form: list 1 is the onboarding test set (ta01..ta10); lists 2+ are Teach prompts, minus the skipped ones.
+
+    Ids keep each sentence's place in its list, so skipping a sentence never renames another."""
     test = [{"id": f"ta{index:02d}", "text": text} for index, text in enumerate(lists[0], start=1)]
     teach = [
         {"id": f"h{number:02d}-{index:02d}", "list": number, "text": text}
         for number, sentences in enumerate(lists[1:], start=2)
         for index, text in enumerate(sentences, start=1)
+        if text not in SKIPPED_SENTENCES
     ]
     return {"source": HARVARD_URL, "lists": lists, "test": test, "teach": teach}
 
