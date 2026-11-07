@@ -1,0 +1,5 @@
+system,speaker,condition,wer,n_clips,notes
+s1-whisper-lora-v1__validation,S1,quiet,0.147,5,epochs=8 best=6 lr=0.0001 rank=32 n_train=45 split=validation code=e36a9b9d3cb5 v1 defaults @14:21
+s1-whisper-lora-v1__validation,S1,all,0.147,5,epochs=8 best=6 lr=0.0001 rank=32 n_train=45 split=validation code=e36a9b9d3cb5 v1 defaults @14:21
+stock-whisper-turbo__validation,S1,quiet,0.500,5,split=validation code=e36a9b9d3cb5 v1 defaults @14:21
+stock-whisper-turbo__validation,S1,all,0.500,5,split=validation code=e36a9b9d3cb5 v1 defaults @14:21

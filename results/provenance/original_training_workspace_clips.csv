@@ -1,0 +1,85 @@
+id,speaker,text,file,split,condition,ok,notes
+P1_r001,P1,We talked of the side show in the circus.,practice/P1_r001.m4a,train,quiet,yes,Harvard list 7 #1
+P1_r002,P1,Use a pencil to write the first draft.,practice/P1_r002.m4a,train,quiet,yes,Harvard list 7 #2
+P1_r003,P1,He ran half way to the hardware store.,practice/P1_r003.m4a,train,quiet,yes,Harvard list 7 #3
+P1_r004,P1,The clock struck to mark the third period.,practice/P1_r004.m4a,train,quiet,yes,Harvard list 7 #4
+P1_r005,P1,A small creek cut across the field.,practice/P1_r005.m4a,train,quiet,yes,Harvard list 7 #5
+P1_r006,P1,Cars and busses stalled in snow drifts.,practice/P1_r006.m4a,train,quiet,yes,Harvard list 7 #6
+P1_r007,P1,The set of china hit the floor with a crash.,practice/P1_r007.m4a,train,quiet,yes,Harvard list 7 #7
+P1_r008,P1,This is a grand season for hikes on the road.,practice/P1_r008.m4a,train,quiet,yes,Harvard list 7 #8
+P1_r009,P1,The dune rose from the edge of the water.,practice/P1_r009.m4a,train,quiet,yes,Harvard list 7 #9
+P1_r010,P1,Those words were the cue for the actor to leave.,practice/P1_r010.m4a,train,quiet,yes,Harvard list 7 #10 (retake)
+P1_t01,P1,The fish twisted and turned on the bent hook.,practice/P1_t01.m4a,test,quiet,yes,Harvard list 8 #1
+P1_t02,P1,Press the pants and sew a button on the vest.,practice/P1_t02.m4a,test,quiet,yes,Harvard list 8 #2
+P1_t03,P1,The swan dive was far short of perfect.,practice/P1_t03.m4a,test,quiet,yes,Harvard list 8 #3
+P1_t04,P1,The beauty of the view stunned the young boy.,practice/P1_t04.m4a,test,quiet,yes,Harvard list 8 #4
+P1_t05,P1,Two blue fish swam in the tank.,practice/P1_t05.m4a,test,quiet,yes,Harvard list 8 #5
+P1_t06,P1,Her purse was full of useless trash.,practice/P1_t06.m4a,test,quiet,yes,Harvard list 8 #6
+P1_t07,P1,The colt reared and threw the tall rider.,practice/P1_t07.m4a,test,quiet,yes,Harvard list 8 #7
+P1_t08,P1,"It snowed, rained, and hailed the same morning.",practice/P1_t08.m4a,test,quiet,yes,Harvard list 8 #8
+P1_t09,P1,Read verse out loud for pleasure.,practice/P1_t09.m4a,test,quiet,yes,Harvard list 8 #9
+P1_t10,P1,Hoist the load to your left shoulder.,practice/P1_t10.m4a,test,quiet,yes,Harvard list 8 #10
+S1_t01,S1,The birch canoe slid on the smooth planks.,raw/S1_t01.m4a,test,quiet,yes,orig id r31; ok assumed - confirm with Data
+S1_t02,S1,Glue the sheet to the dark blue background.,raw/S1_t02.m4a,test,quiet,yes,orig id r32; ok assumed - confirm with Data
+S1_t03,S1,It's easy to tell the depth of a well.,raw/S1_t03.m4a,test,quiet,yes,orig id r33; ok assumed - confirm with Data
+S1_t04,S1,These days a chicken leg is a rare dish.,raw/S1_t04.m4a,test,quiet,yes,orig id r34; ok assumed - confirm with Data
+S1_t05,S1,Rice is often served in round bowls.,raw/S1_t05.m4a,test,quiet,yes,orig id r35; ok assumed - confirm with Data
+S1_t06,S1,The juice of lemons makes fine punch.,raw/S1_t06.m4a,test,quiet,yes,orig id r36; ok assumed - confirm with Data
+S1_t07,S1,The box was thrown beside the parked truck.,raw/S1_t07.m4a,test,quiet,yes,orig id r37; ok assumed - confirm with Data
+S1_t08,S1,The hogs were fed chopped corn and garbage.,raw/S1_t08.m4a,test,quiet,yes,orig id r38; ok assumed - confirm with Data
+S1_t09,S1,Four hours of steady work faced us.,raw/S1_t09.m4a,test,quiet,yes,orig id r39; ok assumed - confirm with Data
+S1_t10,S1,A large size in stockings is hard to sell.,raw/S1_t10.m4a,test,quiet,yes,orig id r40; ok assumed - confirm with Data
+S1_r041,S1,The boy was there when the sun rose.,raw/S1_r041.m4a,train,quiet,yes,orig id r041; ok assumed - confirm with Data
+S1_r042,S1,A rod is used to catch pink salmon.,raw/S1_r042.m4a,train,quiet,yes,orig id r042; ok assumed - confirm with Data
+S1_r043,S1,The source of the huge river is the clear spring.,raw/S1_r043.m4a,train,quiet,yes,orig id r043; ok assumed - confirm with Data
+S1_r044,S1,Kick the ball straight and follow through.,raw/S1_r044.m4a,train,quiet,yes,orig id r044; ok assumed - confirm with Data
+S1_r045,S1,Help the woman get back to her feet.,raw/S1_r045.m4a,train,quiet,yes,orig id r045; ok assumed - confirm with Data
+S1_r046,S1,A pot of tea helps to pass the evening.,raw/S1_r046.m4a,train,quiet,yes,orig id r046; ok assumed - confirm with Data
+S1_r047,S1,Smoky fires lack flame and heat.,raw/S1_r047.m4a,train,quiet,yes,orig id r047; ok assumed - confirm with Data
+S1_r048,S1,The soft cushion broke the man's fall.,raw/S1_r048.m4a,train,quiet,yes,orig id r048; ok assumed - confirm with Data
+S1_r049,S1,The salt breeze came across from the sea.,raw/S1_r049.m4a,train,quiet,yes,orig id r049; ok assumed - confirm with Data
+S1_r050,S1,The girl at the booth sold fifty bonds.,raw/S1_r050.m4a,train,quiet,yes,orig id r050; ok assumed - confirm with Data
+S1_r051,S1,The small pup gnawed a hole in the sock.,raw/S1_r051.m4a,train,quiet,yes,orig id r051; ok assumed - confirm with Data
+S1_r052,S1,The fish twisted and turned on the bent hook.,raw/S1_r052.m4a,train,quiet,yes,orig id r052; ok assumed - confirm with Data
+S1_r053,S1,Press the pants and sew a button on the vest.,raw/S1_r053.m4a,train,quiet,yes,orig id r053; ok assumed - confirm with Data
+S1_r054,S1,The swan dive was far short of perfect.,raw/S1_r054.m4a,train,quiet,yes,orig id r054; ok assumed - confirm with Data
+S1_r055,S1,The beauty of the view stunned the young boy.,raw/S1_r055.m4a,train,quiet,yes,orig id r055; ok assumed - confirm with Data
+S1_r056,S1,Two blue fish swam in the tank.,raw/S1_r056.m4a,train,quiet,yes,orig id r056; ok assumed - confirm with Data
+S1_r057,S1,Her purse was full of useless trash.,raw/S1_r057.m4a,train,quiet,yes,orig id r057; ok assumed - confirm with Data
+S1_r058,S1,The colt reared and threw the tall rider.,raw/S1_r058.m4a,train,quiet,yes,orig id r058; ok assumed - confirm with Data
+S1_r059,S1,"It snowed, rained, and hailed the same morning.",raw/S1_r059.m4a,train,quiet,yes,orig id r059; ok assumed - confirm with Data
+S1_r060,S1,Read verse out loud for pleasure.,raw/S1_r060.m4a,train,quiet,yes,orig id r060; ok assumed - confirm with Data
+S1_r061,S1,Hoist the load to your left shoulder.,raw/S1_r061.m4a,train,quiet,yes,orig id r061; ok assumed - confirm with Data
+S1_r062,S1,Take the winding path to reach the lake.,raw/S1_r062.m4a,train,quiet,yes,orig id r062; ok assumed - confirm with Data
+S1_r063,S1,Note closely the size of the gas tank.,raw/S1_r063.m4a,train,quiet,yes,orig id r063; ok assumed - confirm with Data
+S1_r064,S1,Wipe the grease off his dirty face.,raw/S1_r064.m4a,train,quiet,yes,orig id r064; ok assumed - confirm with Data
+S1_r065,S1,Mend the coat before you go out.,raw/S1_r065.m4a,train,quiet,yes,orig id r065; ok assumed - confirm with Data
+S1_r066,S1,The wrist was badly strained and hung limp.,raw/S1_r066.m4a,train,quiet,yes,orig id r066; ok assumed - confirm with Data
+S1_r067,S1,The stray cat gave birth to kittens.,raw/S1_r067.m4a,train,quiet,yes,orig id r067; ok assumed - confirm with Data
+S1_r068,S1,The young girl gave no clear response.,raw/S1_r068.m4a,train,quiet,yes,orig id r068; ok assumed - confirm with Data
+S1_r069,S1,The meal was cooked before the bell rang.,raw/S1_r069.m4a,train,quiet,yes,orig id r069; ok assumed - confirm with Data
+S1_r070,S1,What joy there is in living.,raw/S1_r070.m4a,train,quiet,yes,orig id r070; ok assumed - confirm with Data
+S1_r071,S1,A king ruled the state in the early days.,raw/S1_r071.m4a,train,quiet,yes,orig id r071; ok assumed - confirm with Data
+S1_r072,S1,The ship was torn apart on the sharp reef.,raw/S1_r072.m4a,train,quiet,yes,orig id r072; ok assumed - confirm with Data
+S1_r073,S1,Sickness kept him home the third week.,raw/S1_r073.m4a,train,quiet,yes,orig id r073; ok assumed - confirm with Data
+S1_r074,S1,The wide road shimmered in the hot sun.,raw/S1_r074.m4a,train,quiet,yes,orig id r074; ok assumed - confirm with Data
+S1_r075,S1,The lazy cow lay in the cool grass.,raw/S1_r075.m4a,train,quiet,yes,orig id r075; ok assumed - confirm with Data
+S1_r076,S1,Lift the square stone over the fence.,raw/S1_r076.m4a,train,quiet,yes,orig id r076; ok assumed - confirm with Data
+S1_r077,S1,The rope will bind the seven books at once.,raw/S1_r077.m4a,train,quiet,yes,orig id r077; ok assumed - confirm with Data
+S1_r078,S1,Hop over the fence and plunge in.,raw/S1_r078.m4a,train,quiet,yes,orig id r078; ok assumed - confirm with Data
+S1_r079,S1,The friendly gang left the drug store.,raw/S1_r079.m4a,train,quiet,yes,orig id r079; ok assumed - confirm with Data
+S1_r080,S1,Mesh wire keeps chicks inside.,raw/S1_r080.m4a,train,quiet,yes,orig id r080; ok assumed - confirm with Data
+S1_r081,S1,The frosty air passed through the coat.,raw/S1_r081.m4a,train,quiet,yes,orig id r081; ok assumed - confirm with Data
+S1_r082,S1,The crooked maze failed to fool the mouse.,raw/S1_r082.m4a,train,quiet,yes,orig id r082; ok assumed - confirm with Data
+S1_r083,S1,Adding fast leads to wrong sums.,raw/S1_r083.m4a,train,quiet,yes,orig id r083; ok assumed - confirm with Data
+S1_r084,S1,The show was a flop from the very start.,raw/S1_r084.m4a,train,quiet,yes,orig id r084; ok assumed - confirm with Data
+S1_r085,S1,A saw is a tool used for making boards.,raw/S1_r085.m4a,train,quiet,yes,orig id r085; ok assumed - confirm with Data
+S1_r086,S1,The wagon moved on well oiled wheels.,raw/S1_r086.m4a,train,quiet,yes,orig id r086; ok assumed - confirm with Data
+S1_r087,S1,March the soldiers past the next hill.,raw/S1_r087.m4a,train,quiet,yes,orig id r087; ok assumed - confirm with Data
+S1_r088,S1,A cup of sugar makes sweet fudge.,raw/S1_r088.m4a,train,quiet,yes,orig id r088; ok assumed - confirm with Data
+S1_r089,S1,Place a rosebush near the porch steps.,raw/S1_r089.m4a,train,quiet,yes,orig id r089; ok assumed - confirm with Data
+S1_r090,S1,Both lost their lives in the raging storm.,raw/S1_r090.m4a,train,quiet,yes,orig id r090; ok assumed - confirm with Data
+S1_t01b,S1,The birch canoe slid on the smooth planks.,raw/S1_t01b.m4a,test,quiet,yes,"second quiet take of S1_t01 (was S1_t01n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t02b,S1,Glue the sheet to the dark blue background.,raw/S1_t02b.m4a,test,quiet,yes,"second quiet take of S1_t02 (was S1_t02n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t03b,S1,It's easy to tell the depth of a well.,raw/S1_t03b.m4a,test,quiet,yes,"second quiet take of S1_t03 (was S1_t03n, mislabelled noisy); ok assumed - confirm with Data"
+S1_t04b,S1,These days a chicken leg is a rare dish.,raw/S1_t04b.m4a,test,quiet,yes,"second quiet take of S1_t04 (was S1_t04n, mislabelled noisy); ok assumed - confirm with Data"

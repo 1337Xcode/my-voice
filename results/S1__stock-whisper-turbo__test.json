@@ -1,0 +1,20 @@
+{
+  "pipeline_version": "2",
+  "evaluation_code_sha256": "e36a9b9d3cb505400dd610291d49d408fd4929a27a88bd921797aa1af9e72dac",
+  "dataset_sha256": "ef9e6bbe1c90f6b3703364179e707484192e5511726ffcfce6584ee6cbd16f8b",
+  "eval_split": "test",
+  "decoding": {
+    "beams": 5,
+    "max_new_tokens": 128,
+    "candidate_method": "beam_top1_plus_unranked_samples",
+    "seed": 0
+  },
+  "evaluated_at": "2026-11-07T14:32:09",
+  "evaluation_dataset_sha256": "ef9e6bbe1c90f6b3703364179e707484192e5511726ffcfce6584ee6cbd16f8b",
+  "metadata_correction": {
+    "date": "2026-11-07",
+    "reason": "Separate original training dataset identity from evaluation identity. Original evaluation timestamp/code hash/predictions are unchanged; no inference or retraining performed.",
+    "original_metadata_sha256": "5646f834355ddd498ac3c548d316b0d4589e0b3a9b738c0342b9605d20e89f50",
+    "original_metadata_path": "archive/pre-provenance-fix/S1__stock-whisper-turbo__test.json"
+  }
+}
