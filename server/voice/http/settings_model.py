@@ -16,6 +16,7 @@ class SettingsIn(BaseModel):
     learn_from_conversations: bool | None = None
     speech_rate: float | None = Field(default=None, ge=0.7, le=1.2)
     decide_provider: str | None = Field(default=None, pattern="^(jev|openai)$")
+    partials: bool | None = None
 
 
 def valid_settings(raw: dict) -> dict:

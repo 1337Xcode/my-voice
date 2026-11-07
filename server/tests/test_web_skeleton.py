@@ -34,7 +34,7 @@ def test_hello_gets_ready_with_voice_and_features(client):
     with client.websocket_connect("/ws?token=test-token") as ws:
         ws.send_json({"type": "hello", "speaker": "P1", "client_version": "t", "settings": {}})
         ready = ws.receive_json()
-    assert ready == {"type": "ready", "speaker": "P1", "model_version": "stock", "voice_id": "JBFqnCBsd6RMkjVDRZzb", "features": {"calls": False, "toolkit": False, "partials": False}}
+    assert ready == {"type": "ready", "speaker": "P1", "model_version": "stock", "voice_id": "JBFqnCBsd6RMkjVDRZzb", "features": {"calls": False, "toolkit": False, "partials": False, "app_calls": True}}
 
 
 def test_unknown_speaker_gets_a_plain_error(client):
@@ -46,5 +46,5 @@ def test_unknown_speaker_gets_a_plain_error(client):
 
 def test_phrases_are_seeded_from_the_default_bank(client):
     phrases = client.get("/phrases?speaker=P1", headers={"Authorization": "Bearer test-token"}).json()["phrases"]
-    assert len(phrases) == 29
-    assert phrases[0] == {"id": "p01", "text": "Hello, nice to meet you.", "category": "Social", "order": 1, "pinned": False, "template_clip_ids": [], "tts": {}, "uses": 0}
+    assert len(phrases) == 30
+    assert phrases[0] == {"id": "p01", "text": "My app speaks for me. Thanks for your patience.", "category": "Social", "order": 1, "pinned": True, "template_clip_ids": [], "tts": {}, "uses": 0}

@@ -33,6 +33,9 @@ class Turn:
     nbest: list = field(default_factory=list)
     phrase_matches: list = field(default_factory=list)
     action: str | None = None
+    # A recognition started during a pause: {"end": last speech sample then, "task": asyncio.Task}.
+    speculation: dict | None = None
+    partial_task: object = None
 
     @property
     def id(self) -> str:

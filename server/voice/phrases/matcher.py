@@ -253,6 +253,11 @@ class PhraseMatcher:
         self._refresh_phrase(phrase_id)
         self._rebuild()
 
+    @property
+    def has_templates(self) -> bool:
+        """True once at least one phrase has a recording to match against."""
+        return bool(self._phrase_ids)
+
     def calibration(self) -> Calibration:
         """The current threshold, temperature and whether they are learned or default."""
         return self._calibration

@@ -1,6 +1,7 @@
 """Modal app for the batch jobs: babble bank, prompts, team import, ASR evaluation, adapter registration and training.
 
-`main.py` includes this app, so the deployed `my-voice` app holds these functions too. Run one from `server/`:
+Deployed separately as `my-voice-jobs` (`npm run deploy` deploys both); the server starts training with
+`modal.Function.from_name("my-voice-jobs", "train_job")`. Run one from `server/`:
 `modal run jobs.py::train --speaker P1` (also build_noise_bank, build_prompts, import_team, eval_asr, register_adapter).
 """
 
@@ -9,6 +10,12 @@ import time
 from pathlib import Path
 
 import modal
+
+# The full turn (recogniser, phrase matcher, gate) needs the serving image, which also bakes WavLM.
+from main import serve_image
+
+# Containers import this module, which imports main, so both images carry main.py.
+pipeline_image = serve_image.add_local_python_source("main")
 
 # Training GPU: L40S (bf16 ~2.9x an A10G's tensor throughput and 48 GB, so batch 8 micro-steps fit), keeping 300 clips under 6 minutes.
 TRAIN_GPU = "L40S"
@@ -43,7 +50,7 @@ jobs_image = (
     .run_function(download_whisper)
     .env({"SPEECH_DATA_ROOT": "/data", "SPEECH_MODELS_ROOT": "/models", "SPEECH_ASSETS_ROOT": "/assets", "HF_HUB_OFFLINE": "1"})
     .add_local_dir("assets", "/assets")
-    .add_local_python_source("voice")
+    .add_local_python_source("voice", "main")
 )
 
 app = modal.App("my-voice-jobs")
@@ -165,6 +172,30 @@ def train_job(speaker: str) -> dict:
         commit()
         raise
     return {**status, "job_seconds": round(time.time() - started, 1)}
+
+
+@app.function(image=pipeline_image, volumes=VOLUMES, secrets=[secret], gpu=EVAL_GPU, timeout=JOB_TIMEOUT_S)
+def eval_pipeline_job(speaker: str, providers: list[str]) -> dict:
+    """Spec 15.4: replays the frozen test set through recognisers and gate per provider and calibrates speak_threshold."""
+    import asyncio
+
+    from voice.evaluation.pipeline_eval import eval_pipeline
+    from voice.phrases.live import load_live_matchers
+    from voice.runtime import Runtime
+
+    start_job()
+    runtime = Runtime.load(device="cuda")
+    runtime.ensure_adapter(speaker)
+    summary = asyncio.run(eval_pipeline(runtime.whisper, runtime.phrases or load_live_matchers("cuda"), speaker, providers))
+    commit()
+    return summary
+
+
+@app.local_entrypoint()
+def eval_pipeline(speaker: str = "P1", providers: str = "jev,openai"):
+    """Replays his test clips through the whole turn and prints the calibration per decision provider."""
+    for provider, result in eval_pipeline_job.remote(speaker, providers.split(",")).items():
+        print(provider, {k: v for k, v in result.items() if k != "curve"})
 
 
 @app.local_entrypoint()

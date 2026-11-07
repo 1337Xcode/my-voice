@@ -5,7 +5,7 @@ from rapidfuzz.distance import Levenshtein
 from voice.gate.candidates import normalise
 from voice.gate.memory import EXPLICIT_SOURCES, load_pairs
 from voice.phrases.bank import load_bank
-from voice.storage import read_json, speaker_dir
+from voice.storage import models_dir, read_json, speaker_dir
 
 # The spec's note (8.6), used until there are enough corrections to measure his own pattern.
 DEFAULT_NOTE = (
@@ -24,12 +24,12 @@ SOUND_CLASSES = {
 GUIDANCE = """You help one speaker be understood. A speech recogniser trained on his own voice listens to him; its output is noisy because his consonants are hard to recognise. For each turn you get candidate sentences gathered from several sources, and you judge which one he actually said.
 
 How to read the evidence:
-- Recogniser hypotheses come ranked 1 to 5 with a length-normalised log-probability. Values near 0 mean the recogniser was sure; below -1 it was guessing. Rank 1 is often wrong for him: the right sentence is frequently rank 2 or 3, or a blend of several hypotheses.
+- Recogniser hypotheses come ranked 1 to 5, each with how many of the recogniser's search beams ended on it and its word confidence (the average probability of its words). Most beams agreeing at high confidence means the recogniser is sure; split beams or low confidence mean it was guessing, and then the right sentence may be rank 2 or 3 or a blend of several hypotheses. How often the recogniser is right for him is measured below on his own held-out sentences: use that as the base rate.
 - A phrase match means the audio sounded like one of his saved phrases, compared against his own recordings of it. A score near 1 with a clear margin over the runner-up is strong evidence. A saved phrase that also appears among the hypotheses is stronger still.
 - A memory candidate is a sentence he has confirmed before, at least twice, when the recogniser heard something similar to what it heard now. The higher the similarity and the count, the stronger.
 - A repair is a sentence an error-correction model rebuilt from the hypotheses. It is a suggestion, not evidence on its own; it counts when it agrees with other sources or clearly fits the conversation.
 - Agreement between independent sources is the strongest single signal.
-- The conversation so far tells you what he is likely to say next. A candidate that answers what was just said, or continues his last sentence, is more likely than one that comes from nowhere.
+- The conversation so far, when there is one, tells you what he is likely to say next: a candidate that answers what was just said, or continues his last sentence, is more likely. With no conversation yet, or a change of subject, judge by the evidence alone; he may read text aloud or say something unexpected.
 - He speaks everyday British English: short practical sentences in shops, cafés, on the phone, getting around and at home. Grammatical, sensible sentences are far more likely than odd ones; a hypothesis with a strange word in it is usually a misheard version of a common sentence.
 
 How the recogniser goes wrong with his speech:
@@ -104,6 +104,18 @@ def vocabulary(speaker: str) -> list[str]:
     groups = stored.values() if isinstance(stored, dict) else [stored]
     return [word.strip() for group in groups if isinstance(group, list) for word in group
             if isinstance(word, str) and word.strip()]
+
+
+def recogniser_note(speaker: str) -> str:
+    """The active model's measured accuracy on his held-out quiet sentences, as one factual sentence."""
+    registry = read_json(models_dir(speaker) / "registry.json", {})
+    active = registry.get("active")
+    entry = registry.get("versions", {}).get(active, {}) if active else registry.get("stock", {})
+    quiet = (entry.get("metrics") or {}).get("quiet")
+    if not quiet:
+        return "not measured yet."
+    name = active or "the stock model"
+    return f"{name} gets {quiet['words_understood']:.0f}% of words right on {quiet['n']} of his held-out sentences recorded in quiet."
 
 
 def build_static_block(speaker: str) -> str:

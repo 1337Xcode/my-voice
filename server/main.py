@@ -29,6 +29,7 @@ def download_models() -> None:
 
     snapshot_download("openai/whisper-large-v3-turbo", allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model"])
     snapshot_download("microsoft/wavlm-base-plus", allow_patterns=["*.json", "*.bin", "*.safetensors"])
+    snapshot_download("microsoft/wavlm-base-plus-sv", allow_patterns=["*.json", "*.bin", "*.safetensors"])
     load_silero_vad()
 
 

@@ -1,5 +1,6 @@
 """Merges recogniser hypotheses, phrase matches, memory and repairs into one de-duplicated candidate set (spec 8.5)."""
 
+import math
 import re
 from dataclasses import dataclass, field
 
@@ -15,6 +16,12 @@ class Hypothesis:
 
     text: str
     logprob: float
+    # How many of the recogniser's search beams ended on this sentence (out of BEAMS_SEARCHED).
+    support: int = 1
+
+
+# Beams the serving recogniser searches (voice.asr.whisper.NUM_BEAMS); agreement is reported out of this.
+BEAMS_SEARCHED = 5
 
 
 @dataclass(frozen=True)
@@ -46,6 +53,7 @@ class Candidate:
     sources: list[str] = field(default_factory=list)
     asr_rank: int | None = None
     asr_logprob: float | None = None
+    asr_support: int | None = None
     phrase_id: str | None = None
     phrase_score: float | None = None
     phrase_margin: float | None = None
@@ -98,7 +106,7 @@ def build_candidates(
     for rank, hypothesis in enumerate(nbest, start=1):
         candidate = _add(pool, hypothesis.text, "asr")
         if candidate and candidate.asr_rank is None:
-            candidate.asr_rank, candidate.asr_logprob = rank, hypothesis.logprob
+            candidate.asr_rank, candidate.asr_logprob, candidate.asr_support = rank, hypothesis.logprob, hypothesis.support
     for match in phrases:
         candidate = _add(pool, match.text, "phrase")
         if candidate and (candidate.phrase_score is None or match.score > candidate.phrase_score):
@@ -119,7 +127,9 @@ def describe(candidate: Candidate) -> str:
     """The candidate's evidence in one plain sentence, for the decision model."""
     parts = []
     if candidate.asr_rank is not None:
-        parts.append(f"recogniser hypothesis rank {candidate.asr_rank} (log-probability {candidate.asr_logprob:.2f})")
+        confidence = 100 * math.exp(candidate.asr_logprob)
+        parts.append(f"recogniser hypothesis rank {candidate.asr_rank}: {candidate.asr_support or 1} of {BEAMS_SEARCHED} search beams "
+                     f"ended on it, word confidence {confidence:.1f}%")
     if candidate.phrase_score is not None:
         parts.append(f"matches his saved phrase by sound (score {candidate.phrase_score:.2f}, margin {candidate.phrase_margin:.2f})")
     if candidate.memory_similarity is not None:
@@ -135,7 +145,7 @@ def features(candidate: Candidate) -> dict:
     """The candidate's scores as a plain dict, for JSON state and logs."""
     return {
         "sentence": candidate.text, "sources": candidate.sources, "agree": candidate.agree,
-        "asr_rank": candidate.asr_rank, "asr_logprob": candidate.asr_logprob,
+        "asr_rank": candidate.asr_rank, "asr_logprob": candidate.asr_logprob, "asr_beams_agreeing": candidate.asr_support,
         "phrase_score": candidate.phrase_score, "phrase_margin": candidate.phrase_margin,
         "memory_similarity": candidate.memory_similarity, "memory_count": candidate.memory_count,
     }

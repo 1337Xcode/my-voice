@@ -5,7 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from voice.config import SERVER_VERSION, MissingKey
-from voice.http import core, phrases
+from voice.calls import routes as calls
+from voice.http import core, data, phrases, results, teach
 from voice.http.auth import bearer, token_matches
 from voice.runtime import Runtime
 from voice.session import run_session
@@ -24,6 +25,10 @@ def create_app(runtime: Runtime) -> FastAPI:
 
     app.include_router(core.router)
     app.include_router(phrases.router)
+    app.include_router(teach.router)
+    app.include_router(results.router)
+    app.include_router(data.router)
+    app.include_router(calls.router)
 
     @app.websocket("/ws")
     async def websocket(ws: WebSocket, token: str | None = Query(default=None)):

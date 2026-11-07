@@ -44,3 +44,33 @@ Sources for API facts are in `docs/API-NOTES.md`.
 - **Look:** follows the user's reference screens: warm cream background, one deep red accent, big round Stop button,
   listener-facing Speaking card, numbered pick cards, pinned patience phrase. Four tabs kept, as the spec requires.
 - **Text size:** our scale multiplies the system font scale (React Native's default), so the larger of the two always wins.
+
+## Recogniser and turn pipeline
+
+- **Beam size 5 (spec), with beam agreement passed to the gate.** Beams often differ only in case or punctuation; they are
+  merged after normalisation and the count of beams behind each sentence goes to the gate as evidence ("5 of 5 beams,
+  word confidence 99.5%"). 8 beams were tried for more distinct hypotheses: ~800 ms vs ~530 ms on the A10G, so 5 stays.
+- **Encoder reuse for the no-speech check is not possible through Whisper's `generate`** (it needs `input_features`;
+  passing `encoder_outputs` crashes or double-expands beams in transformers 5.22). The no-speech check runs its own
+  encoder pass: 56 to 73 ms measured.
+- **Speculative recognition.** When he pauses 300 ms, recognisers start on the audio so far; if no speech follows, that
+  result is used at the end of the turn. Saves up to the 600 ms between the pause and the 900 ms endpoint.
+- **Speaker gate uses WavLM base+ SV x-vectors, not SpeechBrain ECAPA.** SpeechBrain needs `torchaudio`, whose latest
+  release (2.11) is pinned to an older torch than the serving image's 2.15. Same rule as the spec: his centroid from
+  10+ clips, threshold at the 1st percentile of his own leave-one-out scores.
+- **"Tell the app" uses Jev, not Haiku.** Mapping a request onto a fixed list of allowed changes is a calibrated
+  choice with "none of these"; Jev can't invent a setting. Live: "make the text bigger" → text size bigger (p 1.0),
+  "can I have a flat white please" → no change (p 1.0). The Anthropic key in `.env` is also being rejected (401).
+- **Decision gate default is Jev via TypeSafe AI** (`https://api.typesafe.ai/v1/systemone`), per the user. gpt-6-luna
+  stays selectable (`decide_provider`); the EU OpenAI endpoint refuses this project (401 geography restrictions, and a
+  503 "Decision inference is unavailable" during one run).
+- **Live third-party tests are opt-in** (`uv run pytest -m live`) so an outage at a provider can't fail the build check.
+- **Old container stopped on deploy.** With `max_containers=1`, an open WebSocket kept the previous version's
+  container alive and blocked the new one for minutes; `npm run deploy` now stops it and apps reconnect.
+
+## Calls
+
+- **App-to-app calls by code**, beyond the spec's Twilio calls: his app has a 6-digit call code and a share link
+  (`/c/<code>`); a family member opens it in any browser (iPhone Safari included), taps Call, and his app rings. They
+  hear only the clear voice and see each sentence large; he sees their words as captions. Works with no Twilio keys.
+  Twilio phone calls (spec 13) are built too and switch on when the keys are set.

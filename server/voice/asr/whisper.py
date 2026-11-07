@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 
 BASE_MODEL = "openai/whisper-large-v3-turbo"
-# Beams searched; more than the 5 kept, because beams often differ only in case or punctuation.
-NUM_BEAMS = 8
+# Beams searched (spec 8.4A). Beams that differ only in case or punctuation are merged and counted as support.
+NUM_BEAMS = 5
 NBEST = 5
 # A hypothesis whose text compresses this well is a repetition loop, not speech (OpenAI's own cut-off).
 MAX_COMPRESSION_RATIO = 2.4
@@ -30,6 +30,8 @@ class Hypothesis:
 
     text: str
     logprob: float
+    # How many search beams ended on this sentence (case and punctuation ignored).
+    support: int = 1
 
 
 @dataclass
@@ -59,8 +61,11 @@ def keep_hypothesis(text: str) -> bool:
     return bool(key) and key not in FILLER_OUTPUTS and compression_ratio(text) <= MAX_COMPRESSION_RATIO
 
 
-def distinct(texts: list[str], scores: list[float], n: int) -> tuple[list[tuple[str, float]], list[str]]:
-    """The n best hypotheses that differ in words (not just case or punctuation) and pass the guards, plus the dropped ones."""
+def distinct(texts: list[str], scores: list[float], n: int) -> tuple[list[tuple[str, float, int]], list[str]]:
+    """The n best hypotheses that differ in words, each with how many beams ended on it, plus the dropped ones."""
+    support: dict[str, int] = {}
+    for text in texts:
+        support[filler_key(text)] = support.get(filler_key(text), 0) + 1
     kept, dropped, seen = [], [], set()
     for text, score in sorted(zip(texts, scores), key=lambda item: item[1], reverse=True):
         key = filler_key(text)
@@ -70,7 +75,7 @@ def distinct(texts: list[str], scores: list[float], n: int) -> tuple[list[tuple[
         if not keep_hypothesis(text):
             dropped.append(text.strip())
         elif len(kept) < n:
-            kept.append((text.strip(), score))
+            kept.append((text.strip(), score, support[key]))
     return kept, dropped
 
 
@@ -122,8 +127,8 @@ class Whisper:
             self.last_split_ms = {"no_speech": round((checked - started) * 1000), "beams": round((time.perf_counter() - checked) * 1000)}
             kept, dropped = distinct(texts, scores, n)
             if no_speech > MAX_NO_SPEECH_PROBABILITY:
-                dropped, kept = dropped + [text for text, _ in kept], []
-            hypotheses = [Hypothesis(text, round(score, 4)) for text, score in kept]
+                dropped, kept = dropped + [text for text, _, _ in kept], []
+            hypotheses = [Hypothesis(text, round(score, 4), support) for text, score, support in kept]
             return Recognition(hypotheses, round(no_speech, 4), dropped, (time.perf_counter() - started) * 1000)
 
     def transcribe(self, audio: np.ndarray, stock: bool = False) -> str:

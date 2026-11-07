@@ -9,7 +9,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 
 from voice.audio.endpointing import TurnAudio
 from voice.audio.pcm import pcm16_to_float
-from voice.config import SPEAKERS, features
+from voice.config import SPEAKERS, MissingKey, features
 from voice.http.settings_model import valid_settings
 from voice.runtime import Runtime
 from voice.tts.elevenlabs import APP_FORMAT, VoiceError, synthesise, voices
@@ -33,6 +33,8 @@ class Session:
         self.vad_model = None
         self.send_lock = asyncio.Lock()
         self.tasks: set[asyncio.Task] = set()
+        # The live call this session is in (voice.calls), or None.
+        self.call = None
 
     async def send(self, message: dict) -> None:
         """Sends one JSON message to the app; a closed socket is ignored."""
@@ -74,6 +76,7 @@ class Session:
         change = valid_settings(message.get("settings") or {})
         if change:
             await asyncio.to_thread(self.runtime.save_settings, speaker, change)
+        self.runtime.background(self.runtime.warm_connections())
         version = await asyncio.to_thread(self.runtime.ensure_adapter, speaker)
         await self.send({"type": "ready", "speaker": speaker, "model_version": version, "voice_id": self.voice_id(), "features": features().as_dict()})
 
@@ -96,6 +99,7 @@ class Session:
         record = TurnRecord(turn_id=turn_id, speaker=self.speaker, mode=mode, model_version=self.runtime.model_version(self.speaker))
         silence_ms = int(self.settings()["endpoint_silence_ms"])
         self.turn = Turn(record=record, audio=TurnAudio(vad_model=self.vad_model, silence_ms=silence_ms))
+        await self.peer_state("listening")
 
     async def on_audio(self, frame: bytes) -> None:
         """One binary audio frame for the open turn; ends the turn when the VAD hears the end of speech."""
@@ -108,6 +112,15 @@ class Session:
             turn.record.end_reason = "silence" if turn.audio.ended_by_silence() else "max_length"
             await self.send({"type": "endpoint", "turn_id": turn.id})
             self._finish_listening(turn)
+        elif turn.audio.pause_started():
+            self.flow.speculate(turn)
+        elif self.wants_partials(turn):
+            self.flow.partial(turn)
+
+    def wants_partials(self, turn: Turn) -> bool:
+        """Live words only with his personal model (stock partials on his speech are noise) and when he asked for them."""
+        return (turn.mode in ("talk", "call", "tell") and bool(self.settings().get("partials"))
+                and turn.record.model_version != "stock" and turn.audio.partial_due())
 
     async def on_end_turn(self, message: dict) -> None:
         """He tapped Done: the turn ends now."""
@@ -162,7 +175,7 @@ class Session:
         started_ms = now_ms()
         try:
             speech = await synthesise(self.runtime.client(), self.speaker, text, self.voice_id(), APP_FORMAT, float(self.settings()["speech_rate"]))
-        except VoiceError as error:
+        except (VoiceError, MissingKey) as error:
             await self.error("voice_failed", str(error))
             if record is not None:
                 record.errors.append(f"tts: {error}")
@@ -171,8 +184,16 @@ class Session:
             record.t_tts_first_byte = started_ms + int(speech.first_byte_ms)
             record.mark("t_tts_done")
         target = {"phrase_id": phrase_id} if phrase_id else {"turn_id": turn_id}
+        if self.call is not None:
+            # In a call the other side hears the sentence too; this runs alongside the local playback.
+            self.spawn(self.call.relay_sentence(self, text))
         await self.send({"type": "audio", **target, "format": APP_FORMAT, "text": text, "data": base64.b64encode(speech.audio).decode("ascii")})
         return True
+
+    async def peer_state(self, state: str) -> None:
+        """Tells the other side of a call what he is doing (listening, thinking, idle), so they wait for him."""
+        if self.call is not None:
+            await self.call.his_state(self, state)
 
     async def _require_hello(self) -> bool:
         if self.speaker is None:
@@ -186,6 +207,11 @@ class Session:
             message = json.loads(raw)
         except json.JSONDecodeError:
             await self.error("bad_message", "The server got a message it could not read.")
+            return
+        from voice.calls.manager import CLIENT_TYPES
+
+        if message.get("type") in CLIENT_TYPES:
+            await self.runtime.calls.handle(self, message)
             return
         handler = getattr(self, f"on_{message.get('type', '')}", None)
         if handler is None or message.get("type") == "audio":
@@ -211,5 +237,7 @@ async def run_session(ws: WebSocket, runtime: Runtime) -> None:
         return
     finally:
         runtime.sessions.discard(session)
+        if session.call is not None:
+            await runtime.calls.session_closed(session)
         for task in list(session.tasks):
             task.cancel()

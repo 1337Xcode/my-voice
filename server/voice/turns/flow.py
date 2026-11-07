@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import time
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 
@@ -9,7 +10,12 @@ from voice.gate.act import GateSettings
 from voice.gate.candidates import Hypothesis as GateHypothesis
 from voice.gate.candidates import PhraseMatch as GatePhraseMatch
 from voice.gate.pipeline import learn_from_choice, run_gate
+from voice.config import MissingKey
+from voice.gate.candidates import normalise
+from voice.gate.decide import DecisionError
+from voice.tell.mapping import map_request
 from voice.phrases.bank import load_bank, save_bank
+from voice.teach.recording import add_phrase_template, keep_turn_audio
 from voice.turns.record import now_ms
 from voice.turns.turn import Candidate, Turn
 
@@ -43,26 +49,124 @@ class TurnFlow:
     async def process(self, turn: Turn) -> None:
         """End of speech → recognisers → decision → result (and voice when speaking)."""
         self.remember(turn)
+        if turn.mode == "them" or (turn.mode == "handsfree" and not await self.is_him(turn)):
+            await self.caption_partner(turn)
+            return
+        self.runtime.last_turn_at = time.time()
+        await self.session.peer_state("thinking")
         if turn.audio.too_short():
             await self.ignore(turn, "too_short" if turn.audio.state.speech_ms > 0 else "no_speech")
             return
         speaker = self.session.speaker
         turn.record.model_version = await asyncio.to_thread(self.runtime.ensure_adapter, speaker)
-        recognition = await asyncio.to_thread(self.runtime.whisper.nbest, turn.audio.speech_audio())
+        recognition, phrase_result = await self.recognise(turn)
         turn.record.mark("t_asr")
+        turn.phrase_matches = phrase_result.matches if phrase_result else []
         turn.nbest = recognition.hypotheses
         turn.record.asr = {"ms": round(recognition.ms, 1), "no_speech": recognition.no_speech_probability, "dropped": recognition.dropped,
-                           "nbest": [{"text": h.text, "logprob": h.logprob} for h in recognition.hypotheses]}
-        if not recognition.hypotheses:
+                           "nbest": [{"text": h.text, "logprob": h.logprob, "support": h.support} for h in recognition.hypotheses]}
+        if not recognition.hypotheses and not turn.phrase_matches:
             await self.ignore(turn, "no_speech")
             return
+        if turn.mode == "tell":
+            await self.propose_settings(turn)
+            return
         await self.decide(turn)
+
+    async def propose_settings(self, turn: Turn) -> None:
+        """'Tell the app': maps his request to an allowed change and asks him to confirm it (spec 14.4)."""
+        heard = [h.text for h in turn.nbest]
+        try:
+            mapped = await map_request(self.runtime.client(), heard)
+        except (DecisionError, MissingKey) as error:
+            turn.record.errors.append(f"tell: {error}")
+            await self.session.error("tell_failed", "I couldn't work out that request just now. Try again, or change it in Settings.")
+            return
+        turn.state = "finished"
+        turn.record.action, turn.record.outcome = "tell", "proposed" if mapped["changes"] else "not_understood"
+        turn.record.gate = {"tell": mapped}
+        turn.record.mark("t_result_sent")
+        await self.session.send({"type": "settings_proposal", "turn_id": turn.id, "changes": mapped["changes"], "heard": heard[0] if heard else ""})
+        await self.session.peer_state("idle")
+        await asyncio.to_thread(turn.record.save)
+
+    async def is_him(self, turn: Turn) -> bool:
+        """Hands-free: the speaker gate decides whether this segment is his (spec 8.3)."""
+        gate = self.runtime.speaker_gate
+        if gate is None or turn.audio.too_short():
+            return True
+        mine, score = await asyncio.to_thread(gate.is_him, self.session.speaker, turn.audio.speech_audio())
+        turn.record.gate["speaker_score"] = score
+        return mine
+
+    async def caption_partner(self, turn: Turn) -> None:
+        """'Them': the other person's speech becomes a caption with the stock model; never spoken, never stored (spec 8.11)."""
+        turn.state = "finished"
+        if turn.audio.too_short():
+            await self.session.send({"type": "ignored", "turn_id": turn.id, "reason": "no_speech"})
+            return
+        text = await asyncio.to_thread(self.runtime.whisper.transcribe, turn.audio.speech_audio(), True)
+        if text:
+            self.add_to_conversation("them", text)
+            await self.session.send({"type": "partner_caption", "text": text, "source": "room", "turn_id": turn.id})
+        else:
+            await self.session.send({"type": "ignored", "turn_id": turn.id, "reason": "no_speech"})
+
+    def partial(self, turn: Turn) -> None:
+        """A quick greedy decode of the audio so far, sent as `partial`; skipped while the previous one runs."""
+        if turn.partial_task is not None and not turn.partial_task.done():
+            return
+
+        async def run() -> None:
+            text = await asyncio.to_thread(self.runtime.whisper.greedy, turn.audio.audio())
+            if text and turn.state == "listening":
+                await self.session.send({"type": "partial", "turn_id": turn.id, "text": text})
+
+        turn.partial_task = asyncio.create_task(run())
+
+    def speculate(self, turn: Turn) -> None:
+        """He paused: start recognising now, so the result is ready if this turns out to be the end."""
+        if turn.speculation is not None and not turn.speculation["task"].done():
+            return  # one speculative decode at a time
+        end = turn.audio.state.last_speech_sample
+        task = asyncio.create_task(self.run_recognisers(turn, turn.audio.speech_audio()))
+        turn.speculation = {"end": end, "task": task}
+
+    async def recognise(self, turn: Turn):
+        """Reuses the speculative result when no speech arrived after it started; otherwise recognises the whole turn."""
+        speculation = turn.speculation
+        if speculation is not None and speculation["end"] == turn.audio.state.last_speech_sample:
+            turn.record.asr["speculative"] = True
+            return await speculation["task"]
+        if speculation is not None:
+            speculation["task"].cancel()
+        return await self.run_recognisers(turn, turn.audio.speech_audio())
+
+    async def run_recognisers(self, turn: Turn, audio):
+        """Steps: the personal recogniser and the phrase matcher run at the same time on the GPU."""
+        return await asyncio.gather(asyncio.to_thread(self.runtime.whisper.nbest, audio), self.match_phrases(turn, audio))
+
+    async def match_phrases(self, turn: Turn, audio):
+        """Matches the utterance against his recorded phrases; a failure here never stops the turn."""
+        if self.runtime.phrases is None:
+            return None
+        try:
+            result = await asyncio.to_thread(self.runtime.phrases.match, self.session.speaker, audio)
+        except Exception as error:  # the matcher is a secondary recogniser: log it and carry on with ASR
+            log.exception("phrase matcher failed")
+            turn.record.errors.append(f"phrase: {error}")
+            return None
+        turn.record.mark("t_phrase")
+        if result is not None:
+            turn.record.asr["phrases"] = {"rejected": result.rejected, "best": result.best_distance, "ms": round(result.ms, 1),
+                                          "matches": [{"id": m.phrase_id, "d": round(m.distance, 3), "score": round(m.score, 3)} for m in result.matches]}
+        return result
 
     async def decide(self, turn: Turn) -> None:
         """Runs the gate (spec 8.5 to 8.8) and acts on it: speak, pick or again."""
         settings = self.session.settings()
         gate_settings = GateSettings(float(settings["speak_threshold"]), float(settings["pick_threshold"]), settings["before_speaking"] == "check")
-        nbest = [GateHypothesis(h.text, h.logprob) for h in turn.nbest]
+        nbest = [GateHypothesis(h.text, h.logprob, h.support) for h in turn.nbest]
         phrases = [GatePhraseMatch(m.phrase_id, m.text, m.distance, m.score, m.margin) for m in turn.phrase_matches]
         started_ms = now_ms()
         gate = await run_gate(self.session.speaker, nbest, phrases, [c["text"] for c in self.conversation], gate_settings,
@@ -87,6 +191,8 @@ class TurnFlow:
         speaking = None
         if action == "speak" and chosen_id:
             speaking = asyncio.create_task(self.speak_turn(turn, turn.candidate(chosen_id).text, outcome="spoken"))
+        if action != "speak":
+            await self.session.peer_state("choosing")
         turn.record.mark("t_result_sent")
         await self.session.send({"type": "result", "turn_id": turn.id, "action": action, "candidates": turn.record.candidates,
                                  "chosen_id": chosen_id, "timings": turn.record.stage_ms()})
@@ -97,6 +203,7 @@ class TurnFlow:
     async def ignore(self, turn: Turn, reason: str) -> None:
         """Nothing to say for this turn."""
         turn.state = "finished"
+        await self.session.peer_state("idle")
         turn.record.action = "ignored"
         turn.record.outcome = reason
         await self.session.send({"type": "ignored", "turn_id": turn.id, "reason": reason})
@@ -114,6 +221,22 @@ class TurnFlow:
         if ok and outcome == "spoken":
             # An unchallenged spoken sentence counts toward its frequency (spec 9.1).
             await self.learn(turn, text, "spoken")
+        if ok and self.session.settings().get("learn_from_conversations"):
+            await self.keep_audio(turn, text, trust="implicit" if outcome == "spoken" else "explicit")
+
+    async def keep_audio(self, turn: Turn, text: str, trust: str) -> None:
+        """With "Learn from my conversations" on: keep the turn as a clip, and as a phrase template if it's a bank phrase."""
+        speaker = self.session.speaker
+        bank = await asyncio.to_thread(load_bank, speaker)
+        phrase = next((p for p in bank if normalise(p.text) == normalise(text)), None)
+        record = await asyncio.to_thread(keep_turn_audio, speaker, turn.id, turn.audio.speech_audio(), text, trust, phrase.id if phrase else None)
+        turn.record.audio_kept = True
+        if phrase and trust == "explicit":
+            await asyncio.to_thread(add_phrase_template, speaker, phrase.id, record.id)
+            if self.runtime.phrases is not None:
+                self.runtime.phrases.reload(speaker)
+            await self.session.send({"type": "learned", "turn_id": turn.id, "kind": "template"})
+        self.runtime.commit_volumes()
 
     def add_to_conversation(self, who: str, text: str) -> None:
         """Keeps the last few sentences (his and partners') as context for the gate."""

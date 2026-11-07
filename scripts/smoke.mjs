@@ -3,12 +3,15 @@
 // The server runs on Modal (GPU), so this checks the deployed app: run `npm run deploy` first.
 import fs from 'node:fs';
 import { readDotenv } from './dotenv.mjs';
+import { pcmOf, runTurn } from './turn.mjs';
 
 const env = { ...readDotenv('.env'), ...process.env };
 const urlFile = '.work/server-url';
 const SERVER = (env.SMOKE_SERVER_URL || (fs.existsSync(urlFile) ? fs.readFileSync(urlFile, 'utf8') : '')).trim();
 const TOKEN = env.APP_TOKEN;
 const FLOW_TIMEOUT_MS = 90_000;
+// A real P1 recording from the team data (Harvard list 8 #1), fetched by `modal volume get` into .work/p1/.
+const SAMPLE_WAV = '.work/p1/P1_t01.wav';
 
 if (!SERVER || !TOKEN) {
   console.log(`MISSING ${!SERVER ? 'server URL (run npm run deploy)' : 'APP_TOKEN in .env'}`);
@@ -71,6 +74,55 @@ const FLOWS = [
       const { status, body } = await call('/phrases?speaker=P1');
       check(status === 200 && Array.isArray(body?.phrases), `phrases returned ${status}`);
       check(body.phrases.some((p) => p.text === 'Can I have a flat white, please?'), 'default phrase missing');
+    },
+  },
+  {
+    name: 'P1 a spoken sentence is recognised, decided and voiced',
+    needs: ['TYPESAFE_API_KEY', 'ELEVENLABS_API_KEY'],
+    run: async () => {
+      const outcome = await runTurn(pcmOf(fs.readFileSync(SAMPLE_WAV)), { realtime: false });
+      check(outcome.result?.type === 'result', `got ${JSON.stringify(outcome.result)}`);
+      check(['speak', 'pick', 'again'].includes(outcome.result.action), `action ${outcome.result.action}`);
+      check(outcome.result.candidates.some((c) => /fish/i.test(c.text)), `no candidate mentions the fish: ${JSON.stringify(outcome.result.candidates)}`);
+      check(outcome.audioBytes > 5000, 'no voice audio came back');
+      return `${outcome.result.action}, text ${outcome.result.ms} ms, voice ${outcome.audioMs} ms`;
+    },
+  },
+  {
+    name: 'P1 silence is ignored, never spoken',
+    run: async () => {
+      const outcome = await runTurn(Buffer.alloc(3200 * 15), { realtime: false, choose: false });
+      check(outcome.result?.type === 'ignored', `silence produced ${JSON.stringify(outcome.result)}`);
+    },
+  },
+  {
+    name: 'P1 a phrase tap is spoken',
+    needs: ['ELEVENLABS_API_KEY'],
+    run: async () => {
+      const audio = await socketExchange([{ type: 'hello', speaker: 'P1', client_version: 'smoke', settings: {} }, { type: 'say_phrase', phrase_id: 'p02' }], (m) => m.type === 'audio' || m.type === 'error');
+      check(audio.type === 'audio' && audio.phrase_id === 'p02' && audio.data.length > 1000, `got ${JSON.stringify(audio).slice(0, 200)}`);
+    },
+  },
+  {
+    name: 'P2 Teach offers the next prompt',
+    run: async () => {
+      const { status, body } = await call('/teach/next?speaker=P1');
+      check(status === 200 && ['phrase', 'harvard', 'done'].includes(body?.prompt?.kind), `teach/next returned ${status}: ${JSON.stringify(body)}`);
+    },
+  },
+  {
+    name: 'P4 Results show stock and his model from real data',
+    run: async () => {
+      const { status, body } = await call('/results?speaker=P1');
+      check(status === 200 && Array.isArray(body?.headline), `results returned ${status}`);
+      check(body.headline.some((row) => row.kind === 'stock') && body.headline.some((row) => row.kind === 'model'), `headline rows: ${body.headline.map((r) => r.system)}`);
+    },
+  },
+  {
+    name: 'P6 his call link and code are issued',
+    run: async () => {
+      const { status, body } = await call('/calls/link?speaker=P1', { method: 'POST' });
+      check(status === 200 && /^\d{6}$/.test(body?.code ?? ''), `calls/link returned ${status}: ${JSON.stringify(body)}`);
     },
   },
   {

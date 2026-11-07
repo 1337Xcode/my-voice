@@ -39,6 +39,8 @@ fs.writeFileSync(filled, Object.entries(env).filter(([, v]) => v !== '').map(([k
 run('modal', ['secret', 'create', SECRET_NAME, '--from-dotenv', filled, '--force']);
 fs.rmSync(filled);
 
+// The batch jobs (training, evaluation, import) are their own Modal app; the server spawns them by name.
+run('modal', ['deploy', 'jobs.py'], { cwd: path.join(root, 'server'), env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
 const output = run('modal', ['deploy', 'main.py'], { cwd: path.join(root, 'server'), env: { ...process.env, KEEP_WARM: env.KEEP_WARM ?? '0', PYTHONIOENCODING: 'utf-8' } });
 const url = /https:\/\/[\w.-]+\.modal\.run/.exec(output)?.[0];
 if (!url) {

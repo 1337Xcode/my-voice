@@ -52,7 +52,8 @@ export function runTurn(pcm, { speaker: spk = speaker, realtime = true, choose =
         ws.send(JSON.stringify({ type: 'end_turn', turn_id: turnId }));
       } else if (message.type === 'result') {
         result = { ...message, ms: Math.round(performance.now() - doneAt) };
-        if (!choose || !message.candidates.length || message.action === 'speak') { if (!choose) { clearTimeout(timer); ws.close(); resolve({ result }); } return; }
+        if (!choose) { clearTimeout(timer); ws.close(); resolve({ result }); return; }
+        if (!message.candidates.length || message.action === 'speak') return;
         ws.send(JSON.stringify({ type: 'choose', turn_id: turnId, candidate_id: message.candidates[0].id, via: 'pick' }));
       } else if (message.type === 'audio') {
         clearTimeout(timer);

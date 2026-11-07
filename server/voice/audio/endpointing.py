@@ -12,6 +12,11 @@ WINDOW_MS = WINDOW_SAMPLES * 1000 / SAMPLE_RATE
 SPEECH_PROBABILITY = 0.5
 MIN_SPEECH_MS = 250
 MAX_TURN_S = 30.0
+# After this much silence following speech, recognition starts speculatively (he may well be finished).
+SPECULATE_AFTER_MS = 300
+# Live partial words: first after 1 s of audio, then every 700 ms (spec 8.10).
+PARTIAL_FIRST_SAMPLES = SAMPLE_RATE
+PARTIAL_EVERY_SAMPLES = SAMPLE_RATE * 7 // 10
 
 
 @dataclass
@@ -36,6 +41,8 @@ class TurnAudio:
     scored_upto: int = 0
     state: EndpointState = field(default_factory=EndpointState)
     pending: np.ndarray = field(default_factory=lambda: np.zeros(0, dtype=np.float32))
+    paused: bool = False
+    next_partial_at: int = PARTIAL_FIRST_SAMPLES
 
     def __post_init__(self):
         self.vad_model.reset_states()
@@ -58,6 +65,7 @@ class TurnAudio:
         start = self.scored_upto
         self.scored_upto += WINDOW_SAMPLES
         if probability >= SPEECH_PROBABILITY:
+            self.paused = False
             state.speech_ms += WINDOW_MS
             state.trailing_silence_ms = 0.0
             state.heard_speech = True
@@ -65,6 +73,20 @@ class TurnAudio:
             state.last_speech_sample = self.scored_upto
         elif state.heard_speech:
             state.trailing_silence_ms += WINDOW_MS
+
+    def pause_started(self) -> bool:
+        """True once per pause: enough speech, then SPECULATE_AFTER_MS of silence (a good moment to start recognising)."""
+        if self.paused or self.state.speech_ms < MIN_SPEECH_MS or self.state.trailing_silence_ms < SPECULATE_AFTER_MS:
+            return False
+        self.paused = True
+        return True
+
+    def partial_due(self) -> bool:
+        """True every 700 ms once the buffer passes 1 s; the caller skips it if the last partial is still running."""
+        if self.total < self.next_partial_at:
+            return False
+        self.next_partial_at = self.total + PARTIAL_EVERY_SAMPLES
+        return True
 
     def ended_by_silence(self) -> bool:
         """True once enough speech was heard and it has been followed by the configured silence."""

@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -24,6 +25,7 @@ DEFAULT_SETTINGS = {
     "learn_from_conversations": False,
     "speech_rate": 1.0,
     "decide_provider": "jev",
+    "partials": False,
 }
 
 
@@ -32,12 +34,20 @@ class Runtime:
     """The container's loaded state."""
 
     whisper: object = None
+    # The phrase matchers (voice.phrases.live.LiveMatchers), loaded with the recogniser.
+    phrases: object = None
+    # The hands-free speaker gate (voice.speaker.gate.SpeakerGate).
+    speaker_gate: object = None
     loaded_at: float = field(default_factory=time.time)
     load_seconds: float = 0.0
     http: httpx.AsyncClient | None = None
     commit_volumes: Callable[[], None] = lambda: None
     reload_volumes: Callable[[], None] = lambda: None
     sessions: set = field(default_factory=set)
+    # When the last turn ended (server seconds); automatic retraining waits for a quiet spell.
+    last_turn_at: float = 0.0
+    # The call manager (voice.calls.manager.CallManager), created on load.
+    calls: object = None
     tasks: set = field(default_factory=set)
 
     @classmethod
@@ -45,10 +55,19 @@ class Runtime:
         """Loads the recogniser (when a device is given) before the server accepts traffic."""
         started = time.time()
         runtime = cls(commit_volumes=commit or (lambda: None), reload_volumes=reload or (lambda: None))
+        from voice.calls.manager import CallManager
+
+        runtime.calls = CallManager(runtime)
         if device:
             from voice.asr.whisper import load_whisper
 
+            from voice.phrases.live import load_live_matchers
+
             runtime.whisper = load_whisper(device)
+            runtime.phrases = load_live_matchers(device)
+            from voice.speaker.gate import SpeakerGate
+
+            runtime.speaker_gate = SpeakerGate(device)
             runtime._warm_up()
         runtime.load_seconds = round(time.time() - started, 2)
         log.info("runtime loaded in %.1f s", runtime.load_seconds)
@@ -119,6 +138,18 @@ class Runtime:
             log.error("background task failed", exc_info=task.exception())
         else:
             self.commit_volumes()
+
+    async def warm_connections(self) -> None:
+        """Opens keep-alive connections to the gate and voice services, so his first turn doesn't pay TLS set-up (~1 s)."""
+        for url, header in (("https://api.typesafe.ai/v1/models", "TYPESAFE_API_KEY"), ("https://api.elevenlabs.io/v1/models", "ELEVENLABS_API_KEY")):
+            key = os.environ.get(header, "")
+            if not key:
+                continue
+            headers = {"Authorization": f"Bearer {key}"} if header.startswith("TYPESAFE") else {"xi-api-key": key}
+            try:
+                await self.client().get(url, headers=headers, timeout=5.0)
+            except httpx.HTTPError as error:
+                log.warning("warming %s failed: %s", url, error)
 
     async def broadcast(self, message: dict) -> None:
         """Sends a message to every connected app session (model updates, training status)."""

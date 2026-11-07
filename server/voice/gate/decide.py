@@ -15,10 +15,12 @@ from voice.gate.candidates import Candidate, describe, features
 PROVIDERS = ("jev", "openai")
 NONE_ID = "none"
 INSTRUCTIONS = (
-    "Which sentence did this speaker most likely say? Weigh recogniser agreement and scores, phrase-match strength, "
-    "whether it fits the conversation, and his known phrases. Choose none if no candidate is likely."
+    "Which sentence did this speaker actually say? Judge by the recogniser's evidence (beams agreeing, word confidence, "
+    "its measured accuracy for him), phrase matches and correction memory, and use the conversation when there is one. "
+    "He may say unusual or out-of-context sentences, so do not penalise a sentence for being unusual. Choose none only "
+    "when the evidence suggests he said something different from every candidate."
 )
-NONE_DESCRIPTION = "He said something else: no candidate is likely."
+NONE_DESCRIPTION = "None: the recogniser misheard, and he said something different from every candidate."
 JEV_URL = "https://api.typesafe.ai/v1/systemone"
 CONVERSATION_TURNS = 6
 # Latency budget: round 1 normally answers in 150 to 400 ms. One attempt may take at most 1.5 s, and all attempts

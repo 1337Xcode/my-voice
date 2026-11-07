@@ -42,9 +42,11 @@ class Features:
     calls: bool
     toolkit: bool
     partials: bool
+    # App-to-app calls by code need no keys, so they are always on.
+    app_calls: bool = True
 
     def as_dict(self) -> dict:
-        return {"calls": self.calls, "toolkit": self.toolkit, "partials": self.partials}
+        return {"calls": self.calls, "toolkit": self.toolkit, "partials": self.partials, "app_calls": self.app_calls}
 
 
 def features() -> Features:

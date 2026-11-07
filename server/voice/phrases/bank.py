@@ -10,6 +10,8 @@ from voice.storage import read_json, speaker_dir, write_json
 
 CATEGORIES = ("Social", "Café and shop", "Phone", "Getting around", "Home", "Mine")
 MAX_TEMPLATES = 5
+# Pinned first in Phrases and on the offline screen, so he can always ask for patience.
+PATIENCE_PHRASE = "My app speaks for me. Thanks for your patience."
 
 
 class Phrase(BaseModel):
@@ -36,7 +38,7 @@ def default_bank() -> list[Phrase]:
     for category, texts in by_category.items():
         for text in texts:
             index = len(phrases) + 1
-            phrases.append(Phrase(id=f"p{index:02d}", text=text, category=category, order=index))
+            phrases.append(Phrase(id=f"p{index:02d}", text=text, category=category, order=index, pinned=text == PATIENCE_PHRASE))
     return phrases
 
 
