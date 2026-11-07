@@ -31,11 +31,12 @@ secret = modal.Secret.from_name("my-voice-env")
 VOLUMES = {"/data": data_volume, "/models": models_volume}
 
 
-def download_whisper() -> None:
-    """Bakes the base model into the image, so jobs start without a download."""
-    from huggingface_hub import snapshot_download
-
-    snapshot_download("openai/whisper-large-v3-turbo", allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model"])
+# Bakes the base model into the image. A shell step, not run_function: run_function would import this module,
+# which imports main.py, and main.py isn't in the image at that build step.
+DOWNLOAD_WHISPER = (
+    "python -c \"from huggingface_hub import snapshot_download; snapshot_download('openai/whisper-large-v3-turbo', "
+    "allow_patterns=['*.json', '*.safetensors', '*.txt', '*.model'])\""
+)
 
 
 # The same pins as the serving image, so evaluation decodes exactly as serving does.
@@ -44,10 +45,12 @@ jobs_image = (
     .apt_install("ffmpeg")
     .uv_pip_install(
         "torch==2.15.*", "transformers==5.22.*", "peft==0.21.*", "accelerate==1.15.*", "soundfile==0.14.*",
-        "scipy==1.18.*", "numpy==2.*", "httpx==0.28.*", "pydantic==2.*", "huggingface_hub", "jiwer==4.*", "pyloudnorm==0.1.*",
+        "scipy==1.18.*", "numpy==2.*", "httpx==0.28.*", "pydantic==2.*", "huggingface_hub", "jiwer==4.*", "pyloudnorm==0.1.*", "ctranslate2==4.8.*", "nvidia-cublas-cu12==12.*", 
     )
-    .env({"HF_HOME": HF_HOME, "TOKENIZERS_PARALLELISM": "false"})
-    .run_function(download_whisper)
+    .env({"HF_HOME": HF_HOME, "TOKENIZERS_PARALLELISM": "false", "LD_LIBRARY_PATH": "/usr/local/lib/python3.12/site-packages/nvidia/cublas/lib"})
+    .run_commands(DOWNLOAD_WHISPER)
+    # The stock model in CTranslate2 form (4-8x faster beam search with real n-best; see DECISIONS).
+    .run_commands("ct2-transformers-converter --model openai/whisper-large-v3-turbo --output_dir /root/hf/ct2-whisper-large-v3-turbo --quantization float16")
     .env({"SPEECH_DATA_ROOT": "/data", "SPEECH_MODELS_ROOT": "/models", "SPEECH_ASSETS_ROOT": "/assets", "HF_HUB_OFFLINE": "1"})
     .add_local_dir("assets", "/assets")
     .add_local_python_source("voice", "main")
@@ -71,9 +74,10 @@ def commit() -> None:
 
 def whisper_loader():
     """Loads the serving recogniser on this container's GPU."""
-    from voice.asr.whisper import load_whisper
+    from voice.asr.ct2 import load_ct2_whisper
 
-    return load_whisper("cuda")
+    # The serving decoder, so promotion is judged exactly as he'll be heard; set_adapter converts each version once.
+    return load_ct2_whisper("cuda")
 
 
 @app.function(image=jobs_image, volumes=VOLUMES, timeout=JOB_TIMEOUT_S, cpu=4, memory=8192)

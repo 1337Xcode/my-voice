@@ -49,3 +49,15 @@ def test_phrases_are_seeded_from_the_default_bank(client):
     phrases = client.get("/phrases?speaker=P1", headers={"Authorization": "Bearer test-token"}).json()["phrases"]
     assert len(phrases) == 30
     assert phrases[0] == {"id": "p01", "text": "My app speaks for me. Thanks for your patience.", "category": "Social", "order": 1, "pinned": True, "template_clip_ids": [], "tts": {}, "uses": 0}
+
+
+def test_a_wrong_token_on_the_websocket_closes_with_4401_after_accepting(client):
+    from starlette.websockets import WebSocketDisconnect
+
+    with client.websocket_connect("/ws?token=wrong") as ws:
+        try:
+            ws.receive_text()
+        except WebSocketDisconnect as closed:
+            assert closed.code == 4401
+        else:
+            raise AssertionError("the socket stayed open with a wrong token")

@@ -34,6 +34,9 @@ def create_app(runtime: Runtime) -> FastAPI:
     @app.websocket("/ws")
     async def websocket(ws: WebSocket, token: str | None = Query(default=None)):
         if not token_matches(bearer(ws.headers.get("authorization")) or token):
+            # Accept first: a socket refused during the handshake reaches browsers as a bare network failure, so the
+            # app would show "offline" instead of asking for the access code again.
+            await ws.accept()
             await ws.close(code=4401, reason="The app token is missing or wrong.")
             return
         await ws.accept()

@@ -68,12 +68,11 @@ function JoinInstead({ onBack }: { onBack: () => void }) {
 function useAccessLink(loaded: boolean, save: (token: string) => void) {
   useEffect(() => {
     if (!loaded || Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    const code = url.searchParams.get('access')?.trim();
+    const code = new URL(window.location.href).searchParams.get('access')?.trim();
     if (!code) return;
-    url.searchParams.delete('access');
-    window.history.replaceState(null, '', url.pathname + url.search + url.hash);
     save(code);
+    // Expo Router rewrites the address bar from its own copy of the query, so the code is cleared through it.
+    router.setParams({ access: undefined });
   }, [loaded, save]);
 }
 
