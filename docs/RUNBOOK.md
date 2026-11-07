@@ -160,3 +160,23 @@ nose tip, mouth centre (crop px) 8×f32, JPEG length u32.
 Deploying while someone else has uncommitted server changes: deploy from a clean worktree of HEAD
 (`git worktree add --detach .work/deploy-tree HEAD`, then `modal deploy main.py` and `modal deploy jobs.py` inside
 `.work/deploy-tree/server`), so unfinished code never ships.
+
+## Demo day: deploy and open
+
+Deploy with every flag the demo needs (until they are in `.env`, a plain deploy turns them off):
+
+```bash
+KEEP_WARM=1 REALTIME_VOICE=1 LIPS=1 npm run deploy
+```
+
+```bash
+npm run deploy:web
+```
+
+Then check it: `npm run smoke` (12 flows against the live server).
+
+- Web app: https://trymyvoice.vercel.app. Access code: `heard` (set `ACCESS_CODE` in `.env` to change it). One-tap
+  unlock link for his phone: https://trymyvoice.vercel.app/?access=heard
+- Phone calls come from the Twilio number +44 7888 873325 (hard-coded in `scripts/deploy.mjs`; `TWILIO_FROM_NUMBER`
+  overrides). The Calls tab starts with two contacts; names typed on the phone stay on the phone.
+- Deploy only from a clean working tree: `npm run deploy` ships the files on disk, including other sessions' edits.
