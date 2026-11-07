@@ -18,7 +18,7 @@ def test_request_caches_the_static_block_and_asks_for_structured_output():
     body = build_request("STATIC", [{"heard": "fat white", "meant": "Flat white."}], ["them: hi"],
                          [Hypothesis("a fat white", -0.4)], [PhraseMatch("p11", "A flat white.", 0.2, 0.7, 0.3)])
     assert body["model"] == "claude-haiku-5-5"
-    assert body["system"][0]["text"].endswith("STATIC") and body["system"][0]["cache_control"] == {"type": "ephemeral"}
+    assert body["system"][0]["text"].endswith("STATIC") and body["system"][0]["cache_control"] == {"type": "ephemeral", "ttl": "1h"}
     assert body["output_config"]["effort"] == "low" and body["output_config"]["format"]["type"] == "json_schema"
     turn = json.loads(body["messages"][0]["content"])
     assert turn["hypotheses"] == [{"label": "h1", "text": "a fat white", "logprob": -0.4}]

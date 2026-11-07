@@ -57,10 +57,21 @@ def commit_volumes() -> None:
     models_volume.commit()
 
 
-def reload_volumes() -> None:
-    """Picks up writes other containers committed (a new model, imported clips)."""
-    data_volume.reload()
+def reload_models() -> None:
+    """Picks up a newly promoted model. Only the models volume is reloaded while serving: a reload fails, or briefly
+    hides files, while any file is open, and the data volume is in constant use by live turns."""
     models_volume.reload()
+
+
+def read_committed(volume: str, path: str) -> bytes | None:
+    """The latest committed copy of a file another container wrote, read through Modal's API without remounting."""
+    import modal.exception
+
+    target = data_volume if volume == "data" else models_volume
+    try:
+        return b"".join(target.read_file(path))
+    except (FileNotFoundError, modal.exception.NotFoundError):
+        return None
 
 
 @app.cls(
@@ -84,7 +95,7 @@ class Speech:
         from voice.runtime import Runtime
 
         logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
-        self.runtime = Runtime.load(device="cuda", commit=commit_volumes, reload=reload_volumes)
+        self.runtime = Runtime.load(device="cuda", commit=commit_volumes, reload=reload_models, read_committed=read_committed)
 
     @modal.exit()
     def flush(self):

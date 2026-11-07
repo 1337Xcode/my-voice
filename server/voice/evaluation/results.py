@@ -1,12 +1,11 @@
 """The Results screen's data (spec 15.3): words understood per system, learning over versions, live use, calibration."""
 
 import csv
+import io
+from typing import Callable
 import statistics
-from pathlib import Path
 
-from voice.clips.selection import load_frozen_test_set
 from voice.evaluation.wer import wer_percent, words_understood
-from voice.storage import read_json, speaker_dir
 from voice.turns.record import load_turns
 
 HEADLINE_CONDITIONS = ("quiet", "babble_5db")
@@ -31,18 +30,17 @@ def model_rows(registry: dict) -> list[dict]:
     return rows
 
 
-def _read_csv(path: Path) -> list[dict]:
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        return [{k.strip().lower(): (v or "").strip() for k, v in row.items() if k} for row in csv.DictReader(handle)]
+def _read_csv(raw: bytes) -> list[dict]:
+    text = raw.decode("utf-8-sig")
+    return [{k.strip().lower(): (v or "").strip() for k, v in row.items() if k} for row in csv.DictReader(io.StringIO(text))]
 
 
-def listener_rows(speaker: str, references: dict[str, str]) -> list[dict]:
+def listener_rows(raw_csv: bytes | None, references: dict[str, str]) -> list[dict]:
     """New listeners (ids starting L, averaged) and the familiar listener (F) from the imported listeners.csv (quiet clips)."""
-    path = speaker_dir(speaker) / "eval" / "listeners.csv"
-    if not path.exists():
+    if not raw_csv:
         return []
     by_listener: dict[str, list[tuple[str, str]]] = {}
-    for row in _read_csv(path):
+    for row in _read_csv(raw_csv):
         listener = row.get("listener") or row.get("listener_id") or ""
         heard = row.get("hypothesis") or row.get("transcript") or row.get("heard") or ""
         if row.get("id") in references and listener:
@@ -73,15 +71,16 @@ def live_use(speaker: str) -> dict:
             "correction_rate": round(sum(t.get("outcome") in ("picked", "typed") for t in turns) / len(turns), 3) if turns else None}
 
 
-def results(speaker: str, registry: dict) -> dict:
-    """Everything the Results screen shows, from real data only."""
-    frozen_set = load_frozen_test_set(speaker)
-    frozen = frozen_set.as_dict() if frozen_set else {}
+def results(speaker: str, read: Callable[[str, str, object], object], read_bytes: Callable[[str, str], bytes | None]) -> dict:
+    """Everything the Results screen shows, from real data only, read as the jobs last committed it."""
+    registry = read("models", f"{speaker}/registry.json", {})
+    frozen = read("data", f"{speaker}/eval/test_set.json", {})
     references = frozen.get("texts", {})
-    pipeline = read_json(speaker_dir(speaker) / "eval" / "pipeline_results.json", {})
+    pipeline = read("data", f"{speaker}/eval/pipeline_results.json", {})
     versions = [{"version": name, "quiet": _cell(e["metrics"], "quiet"), "babble_5db": _cell(e["metrics"], "babble_5db")}
                 for name, e in sorted(registry.get("versions", {}).items(), key=lambda item: item[1].get("version", 0)) if e.get("metrics")]
     calibration = {p: {k: v for k, v in r.items() if k != "per_clip"} for p, r in pipeline.get("providers", {}).items()}
-    return {"headline": listener_rows(speaker, references) + model_rows(registry), "learning": versions, "live": live_use(speaker),
+    listeners = listener_rows(read_bytes("data", f"{speaker}/eval/listeners.csv"), references)
+    return {"headline": listeners + model_rows(registry), "learning": versions, "live": live_use(speaker),
             "calibration": calibration, "test_set": {"clips": len(frozen.get("all_ids", [])), "conditions": {k: len(v) for k, v in frozen.get("conditions", {}).items()}},
             "footnote": "Words understood = 100 minus word error rate on his held-out test sentences, never trained on."}

@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -42,8 +43,11 @@ class Runtime:
     load_seconds: float = 0.0
     http: httpx.AsyncClient | None = None
     commit_volumes: Callable[[], None] = lambda: None
-    reload_volumes: Callable[[], None] = lambda: None
+    reload_models: Callable[[], None] = lambda: None
+    # Reads another container's committed file: (volume "data" | "models", path in the volume) -> bytes or None.
+    read_committed: Callable[[str, str], bytes | None] | None = None
     sessions: set = field(default_factory=set)
+    models_lock: object = field(default_factory=threading.Lock)
     # When the last turn ended (server seconds); automatic retraining waits for a quiet spell.
     last_turn_at: float = 0.0
     # The call manager (voice.calls.manager.CallManager), created on load.
@@ -51,10 +55,11 @@ class Runtime:
     tasks: set = field(default_factory=set)
 
     @classmethod
-    def load(cls, device: str | None = None, commit: Callable[[], None] | None = None, reload: Callable[[], None] | None = None) -> "Runtime":
+    def load(cls, device: str | None = None, commit: Callable[[], None] | None = None, reload: Callable[[], None] | None = None,
+             read_committed: Callable[[str, str], bytes | None] | None = None) -> "Runtime":
         """Loads the recogniser (when a device is given) before the server accepts traffic."""
         started = time.time()
-        runtime = cls(commit_volumes=commit or (lambda: None), reload_volumes=reload or (lambda: None))
+        runtime = cls(commit_volumes=commit or (lambda: None), reload_models=reload or (lambda: None), read_committed=read_committed)
         from voice.calls.manager import CallManager
 
         runtime.calls = CallManager(runtime)
@@ -90,8 +95,29 @@ class Runtime:
         return models_dir(speaker) / "registry.json"
 
     def registry(self, speaker: str) -> dict:
-        """The speaker's model registry, or an empty one."""
-        return read_json(self.registry_path(speaker), {})
+        """The speaker's model registry, or an empty one (the local copy, which is what the loaded adapter matches)."""
+        with self.models_lock:
+            return read_json(self.registry_path(speaker), {})
+
+    def committed_bytes(self, volume: str, path: str) -> bytes | None:
+        """A file as another container last committed it; the local copy when not running on Modal."""
+        if self.read_committed is not None:
+            return self.read_committed(volume, path)
+        speaker, _, rest = path.partition("/")
+        local = (models_dir if volume == "models" else speaker_dir)(speaker) / rest
+        return local.read_bytes() if local.exists() else None
+
+    def committed_json(self, volume: str, path: str, default):
+        """A JSON file as another container last committed it."""
+        import json
+
+        raw = self.committed_bytes(volume, path)
+        return json.loads(raw) if raw else default
+
+    def refresh_models(self) -> None:
+        """Reloads the models volume (after a promotion), with registry reads paused so none sees it half-mounted."""
+        with self.models_lock:
+            self.reload_models()
 
     def model_version(self, speaker: str) -> str:
         """The active model's name for this speaker, or 'stock' before his first model."""

@@ -51,7 +51,7 @@ async def upload_clip(request: Request, audio: UploadFile = File(...), text: str
     if record.phrase_id and record.split == "train" and runtime.phrases is not None:
         runtime.phrases.reload(speaker)
     runtime.commit_volumes()
-    trigger.maybe_auto_train(runtime, speaker)
+    runtime.background(trigger.maybe_auto_train(runtime, speaker))
     return {"clip": record.model_dump(), "progress": prompts.progress(speaker)}
 
 
@@ -114,7 +114,7 @@ async def review_one(turn_id: str, verdict: ReviewIn, request: Request, speaker:
         raise HTTPException(status_code=404, detail="That turn is no longer waiting for review.") from error
     runtime = request.app.state.runtime
     runtime.commit_volumes()
-    trigger.maybe_auto_train(runtime, speaker)
+    runtime.background(trigger.maybe_auto_train(runtime, speaker))
     return {"clip": clip.model_dump()}
 
 

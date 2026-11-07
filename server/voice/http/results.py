@@ -16,8 +16,7 @@ router = APIRouter(dependencies=[Depends(require_token)])
 async def get_results(request: Request, speaker: str = Query("P1", pattern=SPEAKER_PATTERN)):
     """Words understood per system, learning over versions, live use and the calibrated threshold."""
     runtime = request.app.state.runtime
-    await asyncio.to_thread(runtime.reload_volumes)
-    return await asyncio.to_thread(results, speaker, runtime.registry(speaker))
+    return await asyncio.to_thread(results, speaker, runtime.committed_json, runtime.committed_bytes)
 
 
 @router.post("/eval/run")

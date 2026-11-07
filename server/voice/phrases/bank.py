@@ -1,6 +1,7 @@
 """His phrase bank (spec 7.4): read, seed from the default list, and replace."""
 
 import json
+import os
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -46,6 +47,9 @@ def load_bank(speaker: str) -> list[Phrase]:
     """His bank, seeded with the defaults the first time it is read."""
     stored = read_json(bank_path(speaker), None)
     if stored is None:
+        # Raises if his folder can't be read right now, so an unreadable volume never gets the defaults written over his phrases.
+        if speaker_dir(speaker).exists():
+            os.listdir(speaker_dir(speaker))
         bank = default_bank()
         save_bank(speaker, bank)
         return bank

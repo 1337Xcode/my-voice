@@ -34,7 +34,7 @@ async def state(request: Request, speaker: str = Query("P1", pattern=SPEAKER_PAT
     return {
         "speaker": speaker,
         "model_version": runtime.model_version(speaker),
-        "registry": runtime.registry(speaker),
+        "registry": await asyncio.to_thread(runtime.committed_json, "models", f"{speaker}/registry.json", {}),
         "clips": {"total": len(clips), "train": sum(c.get("split") == "train" for c in clips), "test": sum(c.get("split") == "test" for c in clips)},
         "review_count": sum(c.get("trust") == "implicit" for c in clips),
         "settings": runtime.settings(speaker),
@@ -59,7 +59,7 @@ async def save_settings(request: Request, change: SettingsIn, speaker: str = Que
 async def reload(request: Request, speaker: str = Query("P1", pattern=SPEAKER_PATTERN)):
     """After a promotion: re-read the volumes; the next turn swaps to the new adapter."""
     runtime = request.app.state.runtime
-    await asyncio.to_thread(runtime.reload_volumes)
+    await asyncio.to_thread(runtime.refresh_models)
     version = await asyncio.to_thread(runtime.ensure_adapter, speaker)
     await runtime.broadcast({"type": "model_update", "model_version": version, "metrics": runtime.registry(speaker).get("versions", {}).get(version, {}).get("metrics", {})})
     return {"ok": True, "model_version": version}

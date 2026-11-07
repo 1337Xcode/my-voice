@@ -6,8 +6,7 @@ import time
 
 from voice.clips.records import load_clips
 from voice.clips.selection import is_trainable
-from voice.storage import read_json
-from voice.training.registry import status_path, write_status
+from voice.training.registry import write_status
 
 log = logging.getLogger("voice.training.trigger")
 
@@ -25,12 +24,8 @@ STALE_AFTER_S = 30 * 60
 
 
 def read_status(runtime, speaker: str) -> dict:
-    """The trainer's latest status, after picking up the trainer's committed writes."""
-    try:
-        runtime.reload_volumes()
-    except Exception as error:  # a reload can fail while a file is open; the last status is still useful
-        log.warning("volume reload failed: %s", error)
-    return read_json(status_path(speaker), {"state": "idle", "message": "No training yet."})
+    """The trainer's latest committed status, read without remounting the volume."""
+    return runtime.committed_json("models", f"{speaker}/train_status.json", {"state": "idle", "message": "No training yet."})
 
 
 def is_running(status: dict) -> bool:
@@ -66,6 +61,7 @@ async def relay_status(runtime, speaker: str) -> None:
                                      "eta_s": status.get("eta_s"), "message": status.get("message", "")})
         if status.get("state") in TERMINAL_STATES:
             if status.get("state") == "promoted":
+                await asyncio.to_thread(runtime.refresh_models)
                 version = await asyncio.to_thread(runtime.ensure_adapter, speaker)
                 await runtime.broadcast({"type": "model_update", "model_version": version, "metrics": status.get("metrics", {})})
             return
@@ -77,10 +73,11 @@ def new_trainable_since(speaker: str, since: float) -> int:
     return sum(is_trainable(c) and (c.created_at or 0) > since for c in load_clips(speaker).values())
 
 
-def maybe_auto_train(runtime, speaker: str) -> None:
+async def maybe_auto_train(runtime, speaker: str) -> None:
     """Starts retraining once 20 new trainable clips exist and no turn happened in the last 2 minutes."""
-    status = read_json(status_path(speaker), {})
-    if is_running(status) or time.time() - runtime.last_turn_at < AUTO_QUIET_S:
+    if time.time() - runtime.last_turn_at < AUTO_QUIET_S:
         return
-    if new_trainable_since(speaker, float(status.get("started_at") or status.get("updated_at") or 0)) >= AUTO_NEW_CLIPS:
-        runtime.background(start_training(runtime, speaker, reason="auto"))
+    status = await asyncio.to_thread(runtime.committed_json, "models", f"{speaker}/train_status.json", {})
+    since = float(status.get("started_at") or status.get("updated_at") or 0)
+    if not is_running(status) and await asyncio.to_thread(new_trainable_since, speaker, since) >= AUTO_NEW_CLIPS:
+        await start_training(runtime, speaker, reason="auto")
