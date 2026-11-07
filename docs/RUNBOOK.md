@@ -5,8 +5,8 @@
 | What | Needed for | Status |
 | --- | --- | --- |
 | Expo account (`npx eas-cli login`) and an Apple Developer account | The iPhone development build | Waiting: not logged in |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER` | Calls (phase 6) | Waiting: empty in `.env` |
-| `TOOLKIT_URL`, `TOOLKIT_TOKEN` | Toolkit profile and Tell the app (phase 5) | Waiting: empty in `.env` |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Phone calls | Set (calls come from +44 7888 873325) |
+| `TOOLKIT_URL`, `TOOLKIT_TOKEN` | Toolkit profile and Tell the app | Waiting: empty in `.env` |
 | `HF_TOKEN` | Optional: faster model downloads | Optional |
 
 Set in `.env`: `APP_TOKEN`, `INTERNAL_TOKEN`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `TYPESAFE_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`.
