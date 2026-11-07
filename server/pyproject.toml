@@ -1,0 +1,17 @@
+[project]
+name = "my-voice-server"
+version = "0.1.0"
+description = "Speech server for the personal speech translator"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.162",
+    "pydantic>=2",
+    "modal>=1.5",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "httpx>=0.28"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

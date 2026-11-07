@@ -1,0 +1,41 @@
+{
+  "Social": [
+    "Hello, nice to meet you.",
+    "Thank you very much.",
+    "Sorry, can you say that again?",
+    "I use this app to help me speak.",
+    "Just a moment, please.",
+    "Yes, please.",
+    "No, thank you.",
+    "I'm fine, thanks. How are you?",
+    "See you later.",
+    "Have a good day."
+  ],
+  "Café and shop": [
+    "Can I have a flat white, please?",
+    "Can I have a cup of tea, please?",
+    "Can I pay by card?",
+    "Just this, thank you.",
+    "A table for one, please.",
+    "Can I see the menu?",
+    "The bill, please.",
+    "Where is the toilet, please?"
+  ],
+  "Phone": [
+    "Could you speak a bit slower, please?",
+    "Can you send me that by text?",
+    "I'd like to book an appointment.",
+    "I'm calling about my order.",
+    "What time do you open?"
+  ],
+  "Getting around": [
+    "Where is the station, please?",
+    "A return ticket, please.",
+    "Which stop do I get off at?"
+  ],
+  "Home": [
+    "Can you help me, please?",
+    "I need a moment.",
+    "I'll message you."
+  ]
+}
