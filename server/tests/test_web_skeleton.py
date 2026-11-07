@@ -61,3 +61,11 @@ def test_a_wrong_token_on_the_websocket_closes_with_4401_after_accepting(client)
             assert closed.code == 4401
         else:
             raise AssertionError("the socket stayed open with a wrong token")
+
+
+def test_the_access_code_unlocks_routes_and_the_websocket(client):
+    assert client.post("/wake", headers={"Authorization": "Bearer heard"}).status_code == 200
+    assert client.post("/wake", headers={"Authorization": "Bearer Heard "}).status_code == 200
+    with client.websocket_connect("/ws?token=heard") as ws:
+        ws.send_json({"type": "hello", "speaker": "P1", "client_version": "t", "settings": {}})
+        assert ws.receive_json()["type"] == "ready"

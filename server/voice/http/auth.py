@@ -4,7 +4,10 @@ import hmac
 
 from fastapi import Header, HTTPException, Query
 
-from voice.config import require
+from voice.config import optional, require
+
+# His access code for the demo, chosen by the team; ACCESS_CODE in .env overrides it.
+DEFAULT_ACCESS_CODE = "heard"
 
 
 def bearer(authorization: str | None) -> str | None:
@@ -20,8 +23,17 @@ def same_secret(given: str | None, variable: str, purpose: str) -> bool:
     return bool(given) and hmac.compare_digest(given.encode(), expected.encode())
 
 
+def access_code() -> str:
+    """The short code he types to unlock the web app; set ACCESS_CODE in .env to change it."""
+    return optional("ACCESS_CODE", DEFAULT_ACCESS_CODE)
+
+
 def token_matches(given: str | None) -> bool:
-    """True when the given token is the app's APP_TOKEN."""
+    """True when the given token is the app's APP_TOKEN or his access code."""
+    if not given:
+        return False
+    if hmac.compare_digest(given.strip().lower().encode(), access_code().lower().encode()):
+        return True
     return same_secret(given, "APP_TOKEN", "the app connection")
 
 
