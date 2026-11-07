@@ -26,10 +26,27 @@ if (!fs.existsSync(envFile)) {
   console.error('No .env at the repo root. Copy .env.example to .env and fill it in.');
   process.exit(1);
 }
-const env = readDotenv(envFile);
+// Values set in the shell win over .env, so `KEEP_WARM=1 npm run deploy` works for demo day (and the experiment
+// flags: `REALTIME_VOICE=1 LIPS=1 npm run deploy`).
+const env = { ...readDotenv(envFile), ...Object.fromEntries(['KEEP_WARM', 'TWILIO_FROM_NUMBER', 'REALTIME_VOICE', 'LIPS'].filter((k) => process.env[k]).map((k) => [k, process.env[k]])) };
 if (!env.APP_TOKEN) {
   console.error('APP_TOKEN is empty in .env. Set it to any long random string.');
   process.exit(1);
+}
+
+/** The Twilio account's own voice number, when it owns exactly one; null otherwise. */
+async function twilioVoiceNumber(sid, token) {
+  const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/IncomingPhoneNumbers.json`, {
+    headers: { Authorization: `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}` },
+  });
+  if (!response.ok) return null;
+  const voice = (await response.json()).incoming_phone_numbers.filter((n) => n.capabilities?.voice);
+  return voice.length === 1 ? voice[0].phone_number : null;
+}
+
+if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && !env.TWILIO_FROM_NUMBER) {
+  env.TWILIO_FROM_NUMBER = await twilioVoiceNumber(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
+  console.log(env.TWILIO_FROM_NUMBER ? `Calls will come from the account's number ${env.TWILIO_FROM_NUMBER}.` : 'TWILIO_FROM_NUMBER is empty and the account has no single voice number: phone calls stay off.');
 }
 
 // Only non-empty values go into the secret, so an unset key reads as missing on the server.
@@ -63,6 +80,7 @@ for (const container of JSON.parse(listed.stdout || '[]')) {
 const appEnv = {
   EXPO_PUBLIC_SERVER_URL: url,
   EXPO_PUBLIC_APP_TOKEN: env.APP_TOKEN,
+  EXPO_PUBLIC_WEB_URL: env.EXPO_PUBLIC_WEB_URL || 'https://trymyvoice.vercel.app',
   EXPO_PUBLIC_TOOLKIT_URL: env.TOOLKIT_URL ?? '',
   EXPO_PUBLIC_TOOLKIT_TOKEN: env.TOOLKIT_TOKEN ?? '',
 };

@@ -30,20 +30,31 @@ export function pcmOf(wav) {
   throw new Error('no data chunk');
 }
 
-/** Runs one turn and resolves with { result, audio, ms } once the chosen sentence's audio arrives. */
-export function runTurn(pcm, { speaker: spk = speaker, realtime = true, choose = true } = {}) {
+/**
+ * Runs one turn and resolves with { result, audio, ms } once the chosen sentence's audio arrives.
+ * `streamed` switches on the streamed-voice experiment first (EXP R1) and resolves on its final chunk instead.
+ */
+export function runTurn(pcm, { speaker: spk = speaker, realtime = true, choose = true, streamed = false } = {}) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(`${server.replace('https', 'wss')}/ws?token=${env.APP_TOKEN}`);
     const turnId = `cli-${Date.now()}`;
     const log = [];
     let doneAt = 0;
     let result = null;
+    let resultAt = 0;
+    const chunks = { count: 0, bytes: 0, firstAfterResultMs: null };
     const timer = setTimeout(() => { ws.close(); reject(new Error(`timed out; got ${log.join(', ')}`)); }, 120_000);
     ws.onopen = () => ws.send(JSON.stringify({ type: 'hello', speaker: spk, client_version: 'cli', settings: {} }));
     ws.onmessage = async (event) => {
       const message = JSON.parse(event.data);
       log.push(message.type);
-      if (message.type === 'ready') {
+      if (message.type === 'ready' && streamed) {
+        ws.send(JSON.stringify({ type: 'experiments', realtime_voice: true }));
+      } else if (message.type === 'experiments' && !message.realtime_voice) {
+        clearTimeout(timer);
+        ws.close();
+        reject(new Error('the server did not switch streamed voice on (is REALTIME_VOICE=1 deployed?)'));
+      } else if (message.type === 'ready' || message.type === 'experiments') {
         ws.send(JSON.stringify({ type: 'start_turn', turn_id: turnId, mode: 'talk' }));
         for (let i = 0; i < pcm.length; i += FRAME_BYTES) {
           ws.send(pcm.subarray(i, i + FRAME_BYTES));
@@ -52,10 +63,21 @@ export function runTurn(pcm, { speaker: spk = speaker, realtime = true, choose =
         doneAt = performance.now();
         ws.send(JSON.stringify({ type: 'end_turn', turn_id: turnId }));
       } else if (message.type === 'result') {
-        result = { ...message, ms: Math.round(performance.now() - doneAt) };
+        resultAt = performance.now();
+        result = { ...message, ms: Math.round(resultAt - doneAt) };
         if (!choose) { clearTimeout(timer); ws.close(); resolve({ result }); return; }
         if (!message.candidates.length || message.action === 'speak') return;
         ws.send(JSON.stringify({ type: 'choose', turn_id: turnId, candidate_id: message.candidates[0].id, via: 'pick' }));
+      } else if (message.type === 'audio_chunk') {
+        const bytes = Buffer.from(message.data, 'base64').length;
+        if (bytes && chunks.firstAfterResultMs === null) chunks.firstAfterResultMs = Math.round(performance.now() - (resultAt || doneAt));
+        chunks.count += bytes ? 1 : 0;
+        chunks.bytes += bytes;
+        if (message.final) {
+          clearTimeout(timer);
+          ws.close();
+          resolve({ result, chunks, audioBytes: chunks.bytes, audioMs: Math.round(performance.now() - doneAt) });
+        }
       } else if (message.type === 'audio') {
         clearTimeout(timer);
         ws.close();
