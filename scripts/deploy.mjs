@@ -46,6 +46,18 @@ if (!url) {
   process.exit(1);
 }
 
+// With max_containers=1, an old container kept busy by an open WebSocket would block the new version
+// until its sessions end, so stop it: apps reconnect with backoff and land on the new container.
+const listed = spawnSync('modal', ['container', 'list', '--json'], { cwd: root, encoding: 'utf8', shell: process.platform === 'win32', env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+for (const container of JSON.parse(listed.stdout || '[]')) {
+  // Containers running right after the deploy finished were started by the previous version.
+  const id = container.container_id;
+  if (id && container.app_name === 'my-voice') {
+    spawnSync('modal', ['container', 'stop', id, '--yes'], { cwd: root, shell: process.platform === 'win32' });
+    console.log(`Stopped the previous container ${id} so the new version starts.`);
+  }
+}
+
 const appEnv = {
   EXPO_PUBLIC_SERVER_URL: url,
   EXPO_PUBLIC_APP_TOKEN: env.APP_TOKEN,

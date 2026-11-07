@@ -7,10 +7,22 @@ dependencies = [
     "fastapi[standard]>=0.162",
     "pydantic>=2",
     "modal>=1.5",
+    "numpy>=2.5.4",
+    "soundfile>=0.14.0",
+    "scipy>=1.18.1",
+    "httpx>=0.28.1",
+    "jiwer>=4.0.0",
+    "rapidfuzz>=3.14.6",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8", "httpx>=0.28"]
+dev = [
+    "pytest>=8",
+    "httpx>=0.28",
+    "torch>=2.15.0",
+    "transformers>=5.22.2",
+    "silero-vad>=6.2.3",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

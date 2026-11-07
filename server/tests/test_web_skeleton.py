@@ -34,7 +34,7 @@ def test_hello_gets_ready_with_voice_and_features(client):
     with client.websocket_connect("/ws?token=test-token") as ws:
         ws.send_json({"type": "hello", "speaker": "P1", "client_version": "t", "settings": {}})
         ready = ws.receive_json()
-    assert ready == {"type": "ready", "speaker": "P1", "model_version": "stock", "voice_id": "voice-1", "features": {"calls": False, "toolkit": False, "partials": False}}
+    assert ready == {"type": "ready", "speaker": "P1", "model_version": "stock", "voice_id": "JBFqnCBsd6RMkjVDRZzb", "features": {"calls": False, "toolkit": False, "partials": False}}
 
 
 def test_unknown_speaker_gets_a_plain_error(client):

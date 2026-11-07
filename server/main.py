@@ -14,20 +14,52 @@ KEEP_WARM = os.environ.get("KEEP_WARM", "0") == "1"
 SCALEDOWN_WINDOW_S = 15 * 60
 # A WebSocket session is one input; this lets a session run for an hour before the app reconnects.
 SESSION_TIMEOUT_S = 60 * 60
+# Model weights are baked into the image here, so a cold start reads them from local disk.
+HF_HOME = "/root/hf"
 
 data_volume = modal.Volume.from_name("speech-data", create_if_missing=True)
 models_volume = modal.Volume.from_name("speech-models", create_if_missing=True)
 secret = modal.Secret.from_name(SECRET_NAME)
 
+
+def download_models() -> None:
+    """Fetches the recogniser, the phrase-matcher encoder and the VAD at image build time."""
+    from huggingface_hub import snapshot_download
+    from silero_vad import load_silero_vad
+
+    snapshot_download("openai/whisper-large-v3-turbo", allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model"])
+    snapshot_download("microsoft/wavlm-base-plus", allow_patterns=["*.json", "*.bin", "*.safetensors"])
+    load_silero_vad()
+
+
 serve_image = (
     modal.Image.debian_slim(python_version="3.12")
-    .uv_pip_install("fastapi[standard]==0.162.*")
-    .env({"SPEECH_DATA_ROOT": "/data", "SPEECH_MODELS_ROOT": "/models", "SPEECH_ASSETS_ROOT": "/assets"})
+    .apt_install("ffmpeg")
+    .uv_pip_install(
+        "torch==2.15.*", "transformers==5.22.*", "peft==0.21.*", "accelerate==1.15.*", "silero-vad==6.2.*",
+        "soundfile==0.14.*", "scipy==1.18.*", "numpy==2.*", "httpx==0.28.*", "fastapi[standard]==0.162.*",
+        "pydantic==2.*", "huggingface_hub", "rapidfuzz==3.*", "jiwer==4.*",
+    )
+    .env({"HF_HOME": HF_HOME, "TOKENIZERS_PARALLELISM": "false"})
+    .run_function(download_models)
+    .env({"SPEECH_DATA_ROOT": "/data", "SPEECH_MODELS_ROOT": "/models", "SPEECH_ASSETS_ROOT": "/assets", "HF_HUB_OFFLINE": "1"})
     .add_local_dir("assets", "/assets")
     .add_local_python_source("voice")
 )
 
 app = modal.App(APP_NAME)
+
+
+def commit_volumes() -> None:
+    """Persists writes to both volumes so other containers (and the trainer) see them."""
+    data_volume.commit()
+    models_volume.commit()
+
+
+def reload_volumes() -> None:
+    """Picks up writes other containers committed (a new model, imported clips)."""
+    data_volume.reload()
+    models_volume.reload()
 
 
 @app.cls(
@@ -46,9 +78,16 @@ class Speech:
 
     @modal.enter()
     def load(self):
+        import logging
+
         from voice.runtime import Runtime
 
-        self.runtime = Runtime.load()
+        logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+        self.runtime = Runtime.load(device="cuda", commit=commit_volumes, reload=reload_volumes)
+
+    @modal.exit()
+    def flush(self):
+        commit_volumes()
 
     @modal.asgi_app()
     def web(self):
