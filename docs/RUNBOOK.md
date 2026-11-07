@@ -61,7 +61,8 @@ thresholds, end-of-speech silence and partials.
 ## Import team data
 
 The team's folders are read straight from the `speech-data` volume (`<SPK>/clips.csv`, `<SPK>/incoming/`, `<SPK>/wav/`),
-or from a local `hack-speech/` download:
+or from a local copy of the repository's private `dataset` branch
+(`git clone -b dataset https://github.com/1337Xcode/my-voice.git ../hack-speech`):
 
 ```bash
 cd server

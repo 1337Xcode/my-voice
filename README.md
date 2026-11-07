@@ -36,6 +36,19 @@ My Voice is built around three promises to him:
 - **Results.** How well stock Whisper and each of his models understand him, condition by condition, measured on
   recordings kept aside for testing.
 
+Try it at https://trymyvoice.vercel.app (access code `heard`).
+
+<p>
+  <img src="docs/images/talk-not-sure.png" width="200" alt="When it is not sure: nothing is said aloud, his best guess is shown quietly, and he can say it again or type it">
+  <img src="docs/images/call-incoming.png" width="200" alt="A friend calls him from a browser with his code; the call looks like a phone call">
+  <img src="docs/images/call-guest.png" width="200" alt="The friend's screen during the call: his sentence in large type while his voice plays">
+</p>
+<p>
+  <img src="docs/images/teach.png" width="200" alt="Teach: his model against stock Whisper, and the next sentence to record">
+  <img src="docs/images/results.png" width="200" alt="Results: words understood by stock Whisper and each version of his model">
+  <img src="docs/images/calls.png" width="200" alt="Calls: his call code, joining a friend's call, and phone contacts">
+</p>
+
 ## How well it understands him
 
 Measured on his test recordings, which no model ever trained on: 10 in a quiet room, 4 with real background noise,
