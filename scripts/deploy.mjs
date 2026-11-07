@@ -44,6 +44,10 @@ async function twilioVoiceNumber(sid, token) {
   return voice.length === 1 ? voice[0].phone_number : null;
 }
 
+// The caller ID his calls come from (verified on the Twilio account); .env or the shell can override it.
+const DEFAULT_TWILIO_FROM_NUMBER = '+447818975908';
+env.TWILIO_FROM_NUMBER ||= DEFAULT_TWILIO_FROM_NUMBER;
+
 if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && !env.TWILIO_FROM_NUMBER) {
   env.TWILIO_FROM_NUMBER = await twilioVoiceNumber(env.TWILIO_ACCOUNT_SID, env.TWILIO_AUTH_TOKEN);
   console.log(env.TWILIO_FROM_NUMBER ? `Calls will come from the account's number ${env.TWILIO_FROM_NUMBER}.` : 'TWILIO_FROM_NUMBER is empty and the account has no single voice number: phone calls stay off.');

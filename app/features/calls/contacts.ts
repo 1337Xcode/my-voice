@@ -22,9 +22,12 @@ export function cleanNumber(number: string): string {
   return (trimmed.startsWith('+') ? '+' : '') + trimmed.replace(/[^\d]/g, '');
 }
 
+/** The contact a fresh phone starts with, so the first call is one tap; he can rename or delete it. */
+export const PRESET_CONTACTS: Contact[] = [{ id: 'preset-1', name: 'Friend', number: '+447942733883' }];
+
 export async function loadContacts(): Promise<Contact[]> {
   const raw = await AsyncStorage.getItem(CONTACTS_KEY).catch(() => null);
-  return raw ? (JSON.parse(raw) as Contact[]) : [];
+  return raw ? (JSON.parse(raw) as Contact[]) : PRESET_CONTACTS;
 }
 
 export async function saveContacts(contacts: Contact[]): Promise<void> {
