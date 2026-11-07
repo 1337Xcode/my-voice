@@ -284,7 +284,8 @@ async def run_media_stream(ws: WebSocket, calls) -> None:
                 _hear_media(call, decoder, event)
             elif kind == "stop":
                 return
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, RuntimeError):
+        # Twilio closed the stream, or our hang-up closed it while this loop was waiting: the call is over either way.
         return
     finally:
         if call is not None:

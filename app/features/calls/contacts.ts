@@ -23,7 +23,10 @@ export function cleanNumber(number: string): string {
 }
 
 /** The contact a fresh phone starts with, so the first call is one tap; he can rename or delete it. */
-export const PRESET_CONTACTS: Contact[] = [{ id: 'preset-1', name: 'Friend', number: '+447942733883' }];
+export const PRESET_CONTACTS: Contact[] = [
+  { id: 'preset-1', name: 'Friend', number: '+447942733883' },
+  { id: 'preset-2', name: 'My phone', number: '+447818975908' },
+];
 
 export async function loadContacts(): Promise<Contact[]> {
   const raw = await AsyncStorage.getItem(CONTACTS_KEY).catch(() => null);

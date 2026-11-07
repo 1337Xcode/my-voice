@@ -44,8 +44,8 @@ async function twilioVoiceNumber(sid, token) {
   return voice.length === 1 ? voice[0].phone_number : null;
 }
 
-// The caller ID his calls come from (verified on the Twilio account); .env or the shell can override it.
-const DEFAULT_TWILIO_FROM_NUMBER = '+447818975908';
+// The Twilio number his calls come from; .env or the shell can override it.
+const DEFAULT_TWILIO_FROM_NUMBER = '+447888873325';
 env.TWILIO_FROM_NUMBER ||= DEFAULT_TWILIO_FROM_NUMBER;
 
 if (env.TWILIO_ACCOUNT_SID && env.TWILIO_AUTH_TOKEN && !env.TWILIO_FROM_NUMBER) {

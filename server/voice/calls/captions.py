@@ -32,6 +32,8 @@ class CaptionStream:
         self.segment: TurnAudio | None = None
         self.queue: asyncio.Queue[np.ndarray] = asyncio.Queue()
         self.worker: asyncio.Task | None = None
+        # Counts logged when the call ends, so a silent call and a deaf detector can be told apart.
+        self.stats = {"seconds_in": 0.0, "speech_ms": 0.0, "segments": 0, "captions": 0, "dropped_by_guards": 0}
 
     async def start(self) -> None:
         """Loads this stream's own VAD (it keeps state per stream) and starts the transcriber."""
@@ -46,10 +48,14 @@ class CaptionStream:
         segment = self.segment
         if segment is None:
             return
+        speech_before = segment.state.speech_ms
         ended = segment.add(audio)
+        self.stats["seconds_in"] += audio.size / 16_000
+        self.stats["speech_ms"] += segment.state.speech_ms - speech_before
         if ended or self._idle(segment):
             self.segment = TurnAudio(vad_model=self.vad_model, silence_ms=SEGMENT_SILENCE_MS)
             if ended and not segment.too_short():
+                self.stats["segments"] += 1
                 self.queue.put_nowait(segment.speech_audio())
 
     @staticmethod
@@ -70,7 +76,10 @@ class CaptionStream:
                 await self.on_error(f"A caption could not be made ({error}). The call is still going.")
                 continue
             if text:
+                self.stats["captions"] += 1
                 await self.on_text(text)
+            else:
+                self.stats["dropped_by_guards"] += 1
 
     async def _transcribe(self, audio: np.ndarray) -> str:
         """The single best stock-Whisper text for one segment ("" when the guards drop it)."""
@@ -82,6 +91,7 @@ class CaptionStream:
 
     def stop(self) -> None:
         """Stops transcribing and drops any queued audio."""
+        log.info("caption stream stats: %s", {k: round(v, 1) for k, v in self.stats.items()})
         self.segment = None
         if self.worker is not None:
             self.worker.cancel()
