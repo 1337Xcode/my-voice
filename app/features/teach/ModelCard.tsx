@@ -50,14 +50,12 @@ export function ModelCard({ state, results, onModelUpdate }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <View style={styles.flex}>
-          <AppText variant="caption" tone="muted">
-            Your model
-          </AppText>
-          <AppText variant="heading" testID="model-version">
-            {trained ? shortVersion(active) : 'Not trained yet'}
-          </AppText>
-        </View>
+        <AppText variant="caption" tone="muted">
+          Your model
+        </AppText>
+        <AppText variant="heading" testID="model-version">
+          {trained ? shortVersion(active) : 'Not trained yet'}
+        </AppText>
         {trainedOn ? (
           <AppText variant="caption" tone="muted">
             Trained on {trainedOn} clips{state.clips.test ? ` · ${state.clips.test} kept for testing` : ''}
@@ -100,8 +98,7 @@ export function ModelCard({ state, results, onModelUpdate }: Props) {
 
 const styles = StyleSheet.create({
   card: { gap: space.lg, padding: space.xl, backgroundColor: colors.surface, borderRadius: radius, borderWidth: 1, borderColor: colors.border },
-  head: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md },
-  flex: { flex: 1 },
+  head: { gap: 2 },
   scores: { flexDirection: 'row', gap: space.xl },
   score: { flex: 1, gap: 2 },
   status: { gap: space.sm },
