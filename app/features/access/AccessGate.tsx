@@ -1,6 +1,6 @@
 /** Covers the app until it has an access code (the server's app token): the public web build ships without one. */
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, TextInput, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -66,19 +66,17 @@ function JoinInstead({ onBack }: { onBack: () => void }) {
 
 /** On the web, an unlock link (`/?access=<code>`) saves the code on this device and is wiped from the address bar. */
 function useAccessLink(loaded: boolean, save: (token: string) => void) {
+  // Runs once: saving changes the settings, which would otherwise re-run this before the router clears the URL.
+  const done = useRef(false);
   useEffect(() => {
-    if (!loaded || Platform.OS !== 'web' || typeof window === 'undefined') return;
+    if (done.current || !loaded || Platform.OS !== 'web' || typeof window === 'undefined') return;
+    done.current = true;
     const code = new URL(window.location.href).searchParams.get('access')?.trim();
     if (!code) return;
     save(code);
     // Expo Router rewrites the address bar from its own copy of the query, so the code is cleared through it.
     router.setParams({ access: undefined });
   }, [loaded, save]);
-}
-
-/** A stable "save this token" function for the unlock link. */
-function useCallbackToken(updateDev: (change: { token: string }) => void) {
-  return useCallback((token: string) => updateDev({ token }), [updateDev]);
 }
 
 export function AccessGate() {
@@ -88,7 +86,7 @@ export function AccessGate() {
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
-  useAccessLink(loaded, useCallbackToken(updateDev));
+  useAccessLink(loaded, (token) => updateDev({ token }));
   const needed = loaded && (!settings.dev.token || status === 'unauthorised');
   if (!needed) return null;
 
