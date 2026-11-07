@@ -44,15 +44,20 @@ class Features:
     partials: bool
     # App-to-app calls by code need no keys, so they are always on.
     app_calls: bool = True
+    # The experiments (EXP-SPEC): off unless REALTIME_VOICE=1 / LIPS=1, and even then only for apps that opt in.
+    realtime_voice: bool = False
+    lips: bool = False
 
     def as_dict(self) -> dict:
-        return {"calls": self.calls, "toolkit": self.toolkit, "partials": self.partials, "app_calls": self.app_calls}
+        return {"calls": self.calls, "toolkit": self.toolkit, "partials": self.partials, "app_calls": self.app_calls,
+                "realtime_voice": self.realtime_voice, "lips": self.lips}
 
 
 def features() -> Features:
     """Reads which optional integrations are configured right now."""
     calls = all(optional(v) for v in ("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER"))
-    return Features(calls=calls, toolkit=bool(optional("TOOLKIT_URL")), partials=False)
+    return Features(calls=calls, toolkit=bool(optional("TOOLKIT_URL")), partials=False,
+                    realtime_voice=optional("REALTIME_VOICE") == "1", lips=optional("LIPS") == "1")
 
 
 def default_voice_id() -> str:

@@ -45,6 +45,8 @@ class TurnRecord:
     asr: dict = field(default_factory=dict)
     gate: dict = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    # Experiment data (EXP-SPEC: streamed voice, lips); stays empty when the experiments are off.
+    exp: dict = field(default_factory=dict)
 
     def mark(self, stage: str) -> None:
         """Stamps a stage with the current server time."""

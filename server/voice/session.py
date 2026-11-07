@@ -35,6 +35,8 @@ class Session:
         self.tasks: set[asyncio.Task] = set()
         # The live call this session is in (voice.calls), or None.
         self.call = None
+        # Experiments (EXP-SPEC), each None unless the server flag is on and the app opted in.
+        self.realtime = None
 
     async def send(self, message: dict) -> None:
         """Sends one JSON message to the app; a closed socket is ignored."""
@@ -166,12 +168,37 @@ class Session:
         if await self._require_hello():
             await self.flow.say_phrase(str(message.get("phrase_id", "")))
 
+    async def on_experiments(self, message: dict) -> None:
+        """The app's experiment choices; only honoured when the server's flag for each is on."""
+        from voice.realtime.session_voice import RealtimeVoice
+
+        wants_realtime = bool(message.get("realtime_voice")) and features().realtime_voice
+        if wants_realtime and self.realtime is None:
+            self.realtime = RealtimeVoice(self)
+            self.spawn(self.realtime.warm())
+        elif not wants_realtime and self.realtime is not None:
+            realtime, self.realtime = self.realtime, None
+            self.spawn(realtime.close())
+        await self.send({"type": "experiments", "realtime_voice": self.realtime is not None})
+
     async def on_client_timing(self, message: dict) -> None:
         """The app's measured end-to-text and end-to-audio times for a turn."""
         await self.flow.client_timing(message)
 
     async def speak(self, text: str, turn_id: str | None = None, phrase_id: str | None = None, record: TurnRecord | None = None) -> bool:
         """Synthesises text in his voice and sends it as one `audio` message; returns False on failure."""
+        relayed = False
+        if self.realtime is not None and turn_id and not phrase_id:
+            # Streamed voice (EXP R1). If nothing reached him, the whole-clip voice below says it instead.
+            if self.call is not None:
+                self.spawn(self.call.relay_sentence(self, text))
+                relayed = True
+            outcome = await self.realtime.speak(text, turn_id, record)
+            if outcome == "spoken":
+                return True
+            if outcome == "cut_off":
+                await self.error("voice_failed", "The voice was cut off. Tap Replay to hear it again.")
+                return False
         started_ms = now_ms()
         try:
             speech = await synthesise(self.runtime.client(), self.speaker, text, self.voice_id(), APP_FORMAT, float(self.settings()["speech_rate"]))
@@ -184,7 +211,7 @@ class Session:
             record.t_tts_first_byte = started_ms + int(speech.first_byte_ms)
             record.mark("t_tts_done")
         target = {"phrase_id": phrase_id} if phrase_id else {"turn_id": turn_id}
-        if self.call is not None:
+        if self.call is not None and not relayed:
             # In a call the other side hears the sentence too; this runs alongside the local playback.
             self.spawn(self.call.relay_sentence(self, text))
         await self.send({"type": "audio", **target, "format": APP_FORMAT, "text": text, "data": base64.b64encode(speech.audio).decode("ascii")})
@@ -239,5 +266,7 @@ async def run_session(ws: WebSocket, runtime: Runtime) -> None:
         runtime.sessions.discard(session)
         if session.call is not None:
             await runtime.calls.session_closed(session)
+        if session.realtime is not None:
+            await session.realtime.close()
         for task in list(session.tasks):
             task.cancel()

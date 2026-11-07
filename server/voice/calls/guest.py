@@ -25,11 +25,14 @@ class GuestLine:
     """The guest's browser as the far side of a call: it shows his sentences and plays them in his voice."""
 
     audio_format = APP_FORMAT
+    # Streamed voice (EXP R1) reaches the guest's browser as raw PCM it can play as it arrives.
+    stream_format = "pcm_24000"
 
     def __init__(self, ws: WebSocket):
         self.ws = ws
         self.closed = False
         self.call = None
+        self.sentences = 0
 
     async def send(self, message: dict) -> None:
         """Sends one JSON message; a closed socket drops it."""
@@ -49,6 +52,13 @@ class GuestLine:
 
     async def play(self, audio: bytes) -> None:
         await self.send({"type": "audio", "format": APP_FORMAT, "data": base64.b64encode(audio).decode("ascii")})
+
+    async def play_chunk(self, audio: bytes, seq: int, final: bool) -> None:
+        """One piece of a streamed sentence (EXP R1); `sentence` tells the page where a new one starts."""
+        if seq == 0:
+            self.sentences += 1
+        await self.send({"type": "audio_chunk", "sentence": self.sentences, "seq": seq, "format": self.stream_format, "sample_rate": 24000,
+                         "data": base64.b64encode(audio).decode("ascii"), "final": final})
 
     async def show_state(self, state: str) -> None:
         await self.send({"type": "peer_state", "state": state})

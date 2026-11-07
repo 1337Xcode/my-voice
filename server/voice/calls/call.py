@@ -45,6 +45,8 @@ class Call:
         self.connected_at_ms: int | None = None
         self.captions: CaptionStream | None = None
         self.relay_lock = asyncio.Lock()
+        # Streamed voice to the far side (EXP R1), opened on his first sentence when he has streaming on.
+        self.voice_stream = None
         self.tasks: set[asyncio.Task] = set()
 
     def is_live(self) -> bool:
@@ -84,6 +86,9 @@ class Call:
                 return
             await self.far.before_speaking(text)
             settings = session.settings()
+            if session.realtime is not None:
+                await self._relay_streamed(session, text, float(settings["speech_rate"]))
+                return
             try:
                 speech = await synthesise(session.runtime.client(), session.speaker, text, session.voice_id(),
                                           self.far.audio_format, float(settings["speech_rate"]))
@@ -91,6 +96,20 @@ class Call:
                 await session.error("call_voice_failed", f"The other side did not hear that sentence. {error}")
                 return
             await self.far.play(speech.audio)
+
+    async def _relay_streamed(self, session, text: str, speed: float) -> None:
+        """EXP R1: the far side starts hearing the sentence while the rest of it is still being made."""
+        from voice.realtime.voice_stream import VoiceStream
+
+        fmt = self.far.stream_format
+        if self.voice_stream is None or not self.voice_stream.matches(session.voice_id(), fmt, speed):
+            if self.voice_stream is not None:
+                self.spawn(self.voice_stream.close())
+            self.voice_stream = VoiceStream(session.voice_id(), fmt, speed)
+        try:
+            await self.voice_stream.speak(text, self.far.play_chunk)
+        except (VoiceError, MissingKey) as error:
+            await session.error("call_voice_failed", f"The other side did not hear all of that sentence. {error}")
 
     async def his_state(self, session, state: str) -> None:
         """Passes on what he is doing (listening, thinking, choosing, idle) so the far side waits for him."""
@@ -113,6 +132,9 @@ class Call:
         """Stops captions and background work once the call is over."""
         if self.captions is not None:
             self.captions.stop()
+        if self.voice_stream is not None:
+            stream, self.voice_stream = self.voice_stream, None
+            self.spawn(stream.close())
         for task in list(self.tasks):
             # The ring timer ends the call from inside its own task; cancelling that would cut the ending short.
             if task is not asyncio.current_task():

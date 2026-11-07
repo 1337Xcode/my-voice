@@ -165,6 +165,8 @@ class PhoneLine:
     """The callee's side of a phone call: the Twilio call and, once answered, its media stream."""
 
     audio_format = CALL_FORMAT
+    # Streamed voice (EXP R1) goes to Twilio in the same 8 kHz mu-law, chunk by chunk.
+    stream_format = CALL_FORMAT
 
     def __init__(self, http: httpx.AsyncClient, opening_line: str):
         self.http = http
@@ -194,6 +196,17 @@ class PhoneLine:
         await self._send_audio(audio)
         self.clips_sent += 1
         await self._send({"event": "mark", "mark": {"name": f"sentence-{self.clips_sent}"}})
+
+    async def play_chunk(self, audio: bytes, seq: int, final: bool) -> None:
+        """One piece of a streamed sentence (EXP R1): the first clears the line, the last leaves a mark."""
+        if seq == 0:
+            self._stop_pulse()
+            await self._send({"event": "clear"})
+        if audio:
+            await self._send_audio(audio)
+        if final:
+            self.clips_sent += 1
+            await self._send({"event": "mark", "mark": {"name": f"sentence-{self.clips_sent}"}})
 
     async def show_state(self, state: str) -> None:
         """Pulses while he is working out a sentence; silence otherwise."""

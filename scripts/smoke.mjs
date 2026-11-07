@@ -126,6 +126,19 @@ const FLOWS = [
     },
   },
   {
+    name: 'R1 streamed voice arrives in pieces soon after the result',
+    needs: ['TYPESAFE_API_KEY', 'ELEVENLABS_API_KEY'],
+    run: async () => {
+      const { body } = await call('/experiments/report?speaker=P1');
+      if (!body?.realtime_voice) return 'experiment off on this server (REALTIME_VOICE unset), nothing to check';
+      const outcome = await runTurn(pcmOf(fs.readFileSync(SAMPLE_WAV)), { realtime: false, streamed: true });
+      check(outcome.result?.type === 'result', `got ${JSON.stringify(outcome.result)}`);
+      check(outcome.chunks?.count >= 2 && outcome.chunks.bytes > 20000, `streamed voice too small: ${JSON.stringify(outcome.chunks)}`);
+      check(outcome.chunks.firstAfterResultMs < 1500, `first piece ${outcome.chunks.firstAfterResultMs} ms after the result`);
+      return `first piece ${outcome.chunks.firstAfterResultMs} ms after the result, ${outcome.chunks.count} pieces`;
+    },
+  },
+  {
     name: 'P0 state reports the model and clip counts',
     run: async () => {
       const { status, body } = await call('/state?speaker=P1');
