@@ -20,6 +20,9 @@ from voice.turns.turn import MODES, Turn
 
 log = logging.getLogger("voice.session")
 
+# Longer than the lips sync check (10 s), so only the app's end_turn ends it.
+SYNC_TURN_SILENCE_MS = 20_000
+
 
 
 class Session:
@@ -106,6 +109,9 @@ class Session:
             self.vad_model = await asyncio.to_thread(load_silero_vad)
         record = TurnRecord(turn_id=turn_id, speaker=self.speaker, mode=mode, model_version=self.runtime.model_version(self.speaker))
         silence_ms = int(self.settings()["endpoint_silence_ms"])
+        if mode == "lips_sync":
+            # The sync check's pauses between "pa"s must not end it; the app ends it after 10 seconds.
+            silence_ms = SYNC_TURN_SILENCE_MS
         self.turn = Turn(record=record, audio=TurnAudio(vad_model=self.vad_model, silence_ms=silence_ms))
         if self.lips is not None:
             self.lips.turn_started(self.turn, self.audio_samples)
@@ -123,7 +129,7 @@ class Session:
             turn.record.end_reason = "silence" if turn.audio.ended_by_silence() else "max_length"
             await self.send({"type": "endpoint", "turn_id": turn.id})
             self._finish_listening(turn)
-        elif turn.audio.pause_started():
+        elif turn.audio.pause_started() and turn.mode != "lips_sync":
             self.flow.speculate(turn)
         elif self.wants_partials(turn):
             self.flow.partial(turn)
