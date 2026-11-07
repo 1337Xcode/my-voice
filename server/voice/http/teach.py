@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from voice.clips.records import load_clips, save_clip
 from voice.http.auth import SPEAKER_PATTERN, require_token
 from voice.teach import prompts, recording
+from voice.teach.suggest import SuggestError, suggest
 from voice.training import trigger
 
 router = APIRouter(dependencies=[Depends(require_token)])
@@ -74,8 +75,13 @@ async def clip_audio(clip_id: str, speaker: str = Query("P1", pattern=SPEAKER_PA
 
 
 @router.get("/teach/next")
-async def teach_next(speaker: str = Query("P1", pattern=SPEAKER_PATTERN)):
+async def teach_next(request: Request, speaker: str = Query("P1", pattern=SPEAKER_PATTERN)):
     prompt = await asyncio.to_thread(prompts.next_prompt, speaker)
+    if prompt["kind"] == "like_yours":
+        try:
+            prompt["text"] = (await suggest(request.app.state.runtime.client(), speaker, count=1) or [""])[0]
+        except SuggestError as error:
+            raise HTTPException(status_code=503, detail=str(error)) from error
     return {"prompt": prompt, "progress": await asyncio.to_thread(prompts.progress, speaker)}
 
 

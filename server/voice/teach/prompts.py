@@ -36,7 +36,7 @@ def _phrase_prompt(speaker: str, clips: list[ClipRecord]) -> dict | None:
 
 
 def next_prompt(speaker: str) -> dict:
-    """Phrases first, then the next unrecorded Harvard sentence; `done` when everything is recorded."""
+    """Phrases first, then the next unrecorded Harvard sentence; then `like_yours` (the route asks Haiku for its text)."""
     clips = list(load_clips(speaker).values())
     phrase = _phrase_prompt(speaker, clips)
     if phrase:
@@ -45,7 +45,7 @@ def next_prompt(speaker: str) -> dict:
     for item in harvard()["teach"]:
         if item["id"] not in recorded:
             return {"kind": "harvard", "text": item["text"], "prompt_id": item["id"], "split": "train", "condition": "quiet"}
-    return {"kind": "done", "text": "", "split": "train", "condition": "quiet"}
+    return {"kind": "like_yours", "text": "", "split": "train", "condition": "quiet"}
 
 
 def progress(speaker: str) -> dict:
