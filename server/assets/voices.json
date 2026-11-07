@@ -1,0 +1,11 @@
+{
+  "default": "JBFqnCBsd6RMkjVDRZzb",
+  "voices": [
+    { "id": "JBFqnCBsd6RMkjVDRZzb", "name": "George", "description": "Warm, mature, British" },
+    { "id": "onwK4e9ZLuTAKqWW03F9", "name": "Daniel", "description": "Steady, clear, British" },
+    { "id": "pqHfZKP75CvOlQylNhV4", "name": "Bill", "description": "Wise, older, American" },
+    { "id": "nPczCjzI2devNBz1zQrb", "name": "Brian", "description": "Deep, resonant, American" },
+    { "id": "cjVigY5qzO86Huf0OWal", "name": "Eric", "description": "Smooth, trustworthy, American" },
+    { "id": "iP95p4xoKVk53GoZ742B", "name": "Chris", "description": "Down-to-earth, American" }
+  ]
+}
