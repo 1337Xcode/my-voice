@@ -28,6 +28,8 @@ export type Settings = {
     pickThreshold: number;
     endpointSilenceMs: number;
     partials: boolean;
+    /** True once someone picked the speaker in the developer panel; until then the build's default applies. */
+    speakerChosen?: boolean;
   };
 };
 
@@ -87,6 +89,8 @@ function mergeStored(raw: string | null): Settings {
   // Blank developer overrides fall back to the build's public env.
   dev.serverUrl = dev.serverUrl || defaultSettings.dev.serverUrl;
   dev.token = dev.token || defaultSettings.dev.token;
+  // A speaker saved before this build's default existed (e.g. the developer's P1 on his phone) yields to the default.
+  if (!dev.speakerChosen) dev.speaker = defaultSettings.dev.speaker;
   return { ...defaultSettings, ...stored, dev };
 }
 

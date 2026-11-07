@@ -60,7 +60,7 @@ export function ModelCard({ state, results, onModelUpdate }: Props) {
         </View>
         {trainedOn ? (
           <AppText variant="caption" tone="muted">
-            Trained on {trainedOn} clips
+            Trained on {trainedOn} clips{state.clips.test ? ` · ${state.clips.test} kept for testing` : ''}
           </AppText>
         ) : null}
       </View>

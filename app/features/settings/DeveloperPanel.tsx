@@ -50,7 +50,7 @@ export function DeveloperPanel() {
       <AppText variant="heading">Developer</AppText>
       <Field label="Server URL" value={dev.serverUrl} onSave={(serverUrl) => updateDev({ serverUrl: serverUrl.replace(/\/$/, '') })} />
       <Field label="App token" value={dev.token} secure onSave={(token) => updateDev({ token })} />
-      <Choice label="Active speaker" options={speakers} value={dev.speaker} onChange={(speaker) => updateDev({ speaker })} />
+      <Choice label="Active speaker" options={speakers} value={dev.speaker} onChange={(speaker) => updateDev({ speaker, speakerChosen: true })} />
       <Field label="Speak threshold (0.5 to 0.99)" numeric value={String(dev.speakThreshold)} onSave={(t) => updateDev({ speakThreshold: parseIn(t, dev.speakThreshold, 0.5, 0.99) })} />
       <Field label="Pick threshold (0.1 to 0.99)" numeric value={String(dev.pickThreshold)} onSave={(t) => updateDev({ pickThreshold: parseIn(t, dev.pickThreshold, 0.1, 0.99) })} />
       <Field label="End-of-speech silence, ms (500 to 2000)" numeric value={String(dev.endpointSilenceMs)} onSave={(t) => updateDev({ endpointSilenceMs: Math.round(parseIn(t, dev.endpointSilenceMs, 500, 2000)) })} />
