@@ -8,6 +8,7 @@
     "verify": "npm run typecheck && npm run test:server && npm run smoke",
     "typecheck": "cd app && npx tsc --noEmit",
     "test:server": "cd server && uv run pytest -q",
-    "doctor": "node scripts/doctor.mjs"
+    "doctor": "node scripts/doctor.mjs",
+    "deploy:web": "node scripts/deploy-web.mjs"
   }
 }
