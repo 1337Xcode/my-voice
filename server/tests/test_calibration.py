@@ -21,3 +21,11 @@ def test_threshold_is_the_lowest_with_under_two_percent_wrong():
 
 def test_a_wrong_sentence_at_high_confidence_pushes_the_threshold_to_the_top():
     assert choose_threshold(curve(rows((0.99, 50.0), (0.5, 0.0)))) == 0.98
+
+
+def test_threshold_is_applied_only_with_enough_replayed_clips():
+    from voice.evaluation.pipeline_eval import calibrated_threshold
+
+    assert calibrated_threshold({"jev": {"speak_threshold": 0.8, "n": 34}}, "jev") == 0.8
+    assert calibrated_threshold({"jev": {"speak_threshold": 0.6, "n": 5}}, "jev") is None
+    assert calibrated_threshold({"jev": {"speak_threshold": 0.8, "n": 34}}, "openai") is None

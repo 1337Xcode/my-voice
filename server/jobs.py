@@ -188,14 +188,36 @@ def eval_pipeline_job(speaker: str, providers: list[str]) -> dict:
     runtime.ensure_adapter(speaker)
     summary = asyncio.run(eval_pipeline(runtime.whisper, runtime.phrases or load_live_matchers("cuda"), speaker, providers))
     commit()
-    return summary
+    applied = apply_calibration(speaker, summary)
+    return {**summary, "applied_threshold": applied}
+
+
+def apply_calibration(speaker: str, summary: dict) -> float | None:
+    """Sets his live speak threshold through the server (which owns his settings file), for the provider he uses."""
+    import os
+
+    import httpx
+
+    from voice.evaluation.pipeline_eval import calibrated_threshold
+
+    server = os.environ.get("SERVER_URL", "https://xc0d3--my-voice-speech-web.us-east.modal.run")
+    headers = {"Authorization": f"Bearer {os.environ['APP_TOKEN']}"}
+    current = httpx.get(f"{server}/state", params={"speaker": speaker}, headers=headers, timeout=120).json()
+    threshold = calibrated_threshold(summary, current["settings"].get("decide_provider", "jev"))
+    if threshold is not None:
+        response = httpx.post(f"{server}/settings", params={"speaker": speaker}, headers=headers, json={"speak_threshold": threshold}, timeout=60)
+        response.raise_for_status()
+    return threshold
 
 
 @app.local_entrypoint()
 def eval_pipeline(speaker: str = "P1", providers: str = "jev,openai"):
     """Replays his test clips through the whole turn and prints the calibration per decision provider."""
-    for provider, result in eval_pipeline_job.remote(speaker, providers.split(",")).items():
-        print(provider, {k: v for k, v in result.items() if k != "curve"})
+    summary = eval_pipeline_job.remote(speaker, providers.split(","))
+    for provider, result in summary.items():
+        if provider != "applied_threshold":
+            print(provider, {k: v for k, v in result.items() if k != "curve"})
+    print("speak_threshold applied to his live settings:", summary["applied_threshold"])
 
 
 @app.local_entrypoint()

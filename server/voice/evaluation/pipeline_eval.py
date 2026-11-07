@@ -11,7 +11,7 @@ from voice.evaluation.wer import clip_wer_percent
 from voice.gate.act import GateSettings
 from voice.gate.candidates import Hypothesis, PhraseMatch
 from voice.gate.pipeline import run_gate
-from voice.storage import read_json, speaker_dir, write_json
+from voice.storage import speaker_dir, write_json
 
 # A spoken sentence counts as wrong when its WER against the reference is over 10% (spec 15.4).
 WRONG_WER = 10.0
@@ -57,14 +57,11 @@ def choose_threshold(points: list[dict]) -> float:
 MIN_CLIPS_TO_APPLY = 20
 
 
-def apply_threshold(speaker: str, summary: dict) -> float | None:
-    """Sets his live speak_threshold to the calibrated value for the gate provider he uses (spec 15.4)."""
-    settings_path = speaker_dir(speaker) / "settings.json"
-    settings = read_json(settings_path, {})
-    result = summary["providers"].get(settings.get("decide_provider", "jev"))
+def calibrated_threshold(by_provider: dict, provider: str) -> float | None:
+    """The calibrated speak threshold for the provider he uses, when enough clips were replayed to trust it."""
+    result = by_provider.get(provider)
     if not result or result["n"] < MIN_CLIPS_TO_APPLY:
         return None
-    write_json(settings_path, {**settings, "speak_threshold": result["speak_threshold"]})
     return result["speak_threshold"]
 
 
@@ -87,5 +84,4 @@ async def eval_pipeline(whisper, matchers, speaker: str, providers: list[str]) -
                                               "top3_contains_right": round(sum(r["in_top3"] for r in rows) / max(1, len(rows)), 4),
                                               "errors": sum(bool(r["errors"]) for r in rows), "per_clip": rows}
     write_json(speaker_dir(speaker) / "eval" / "pipeline_results.json", summary)
-    apply_threshold(speaker, summary)
     return {p: {k: v for k, v in result.items() if k != "per_clip"} for p, result in summary["providers"].items()}
