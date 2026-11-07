@@ -29,7 +29,9 @@ class Turn:
     audio: TurnAudio
     state: str = "listening"  # listening -> processing -> decided -> finished
     candidates: list[Candidate] = field(default_factory=list)
+    all_candidates: list[Candidate] = field(default_factory=list)
     nbest: list = field(default_factory=list)
+    phrase_matches: list = field(default_factory=list)
     action: str | None = None
 
     @property

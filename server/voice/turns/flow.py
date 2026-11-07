@@ -5,7 +5,12 @@ import logging
 from collections import OrderedDict
 from typing import TYPE_CHECKING
 
+from voice.gate.act import GateSettings
+from voice.gate.candidates import Hypothesis as GateHypothesis
+from voice.gate.candidates import PhraseMatch as GatePhraseMatch
+from voice.gate.pipeline import learn_from_choice, run_gate
 from voice.phrases.bank import load_bank, save_bank
+from voice.turns.record import now_ms
 from voice.turns.turn import Candidate, Turn
 
 if TYPE_CHECKING:
@@ -15,7 +20,6 @@ log = logging.getLogger("voice.flow")
 
 RECENT_TURNS = 20
 CONVERSATION_TURNS = 6
-PICK_OPTIONS = 3
 
 
 class TurnFlow:
@@ -55,9 +59,24 @@ class TurnFlow:
         await self.decide(turn)
 
     async def decide(self, turn: Turn) -> None:
-        """Stand-in decision until the gate lands: always offer the top hypotheses to pick from."""
-        turn.candidates = [Candidate(id=f"c{i + 1}", text=h.text, p=0.0, sources=["asr"]) for i, h in enumerate(turn.nbest[:PICK_OPTIONS])]
-        await self.send_result(turn, "pick", chosen_id=None)
+        """Runs the gate (spec 8.5 to 8.8) and acts on it: speak, pick or again."""
+        settings = self.session.settings()
+        gate_settings = GateSettings(float(settings["speak_threshold"]), float(settings["pick_threshold"]), settings["before_speaking"] == "check")
+        nbest = [GateHypothesis(h.text, h.logprob) for h in turn.nbest]
+        phrases = [GatePhraseMatch(m.phrase_id, m.text, m.distance, m.score, m.margin) for m in turn.phrase_matches]
+        started_ms = now_ms()
+        gate = await run_gate(self.session.speaker, nbest, phrases, [c["text"] for c in self.conversation], gate_settings,
+                              settings["decide_provider"], self.runtime.client())
+        for stage, offset in gate.timings.items():
+            if offset is not None:
+                setattr(turn.record, stage, started_ms + offset)
+        turn.record.gate = {"provider": gate.provider, "model": gate.model, "errors": gate.errors, "shown": gate.shown_ids}
+        turn.record.errors.extend(f"{step}: {message}" for step, message in gate.errors.items())
+        by_id = {c.id: c for c in gate.candidates}
+        shown = [by_id[i] for i in gate.shown_ids if i in by_id] or gate.candidates[:1]
+        turn.candidates = [Candidate(id=c.id, text=c.text, p=c.p or 0.0, sources=c.sources) for c in shown]
+        turn.all_candidates = [Candidate(id=c.id, text=c.text, p=c.p or 0.0, sources=c.sources) for c in gate.candidates]
+        await self.send_result(turn, gate.action, chosen_id=gate.chosen_id)
 
     async def send_result(self, turn: Turn, action: str, chosen_id: str | None) -> None:
         """Sends the decision; for `speak`, the voice starts in parallel with the message."""
@@ -92,6 +111,9 @@ class TurnFlow:
         if ok:
             self.add_to_conversation("me", text)
         await asyncio.to_thread(turn.record.save)
+        if ok and outcome == "spoken":
+            # An unchallenged spoken sentence counts toward its frequency (spec 9.1).
+            await self.learn(turn, text, "spoken")
 
     def add_to_conversation(self, who: str, text: str) -> None:
         """Keeps the last few sentences (his and partners') as context for the gate."""
@@ -110,6 +132,7 @@ class TurnFlow:
             await self.session.speak(sentence, turn_id=turn_id)
             return
         await self.speak_turn(turn, sentence, outcome="typed" if via == "typed" else "picked")
+        await self.learn(turn, sentence, "typed" if via == "typed" else "pick")
 
     async def confirm(self, turn_id: str | None) -> None:
         """Check-first: he confirmed the top candidate."""
@@ -118,6 +141,7 @@ class TurnFlow:
             await self.session.error("bad_confirm", "That sentence is no longer available. Say it again or type it.")
             return
         await self.speak_turn(turn, turn.candidates[0].text, outcome="confirmed")
+        await self.learn(turn, turn.candidates[0].text, "pick")
 
     async def reject(self, turn_id: str | None) -> None:
         """'Not what I meant': record it and offer the other candidates."""
@@ -125,9 +149,19 @@ class TurnFlow:
         if turn is None:
             return
         spoken = (turn.record.final_text or "").strip().lower()
-        turn.candidates = [c for c in turn.candidates if c.text.strip().lower() != spoken]
+        turn.candidates = [c for c in (turn.all_candidates or turn.candidates) if c.text.strip().lower() != spoken][:3]
         turn.record.outcome = "rejected"
         await self.send_result(turn, "pick", chosen_id=None)
+
+    async def learn(self, turn: Turn, meant: str, source: str) -> None:
+        """Adds what he meant to the correction memory (spec 9.1) and shows the Learned note for corrections."""
+        if not turn.nbest:
+            return
+        heard = turn.nbest[0].text
+        await asyncio.to_thread(learn_from_choice, self.session.speaker, heard, [h.text for h in turn.nbest], meant, source)
+        self.runtime.commit_volumes()
+        if source in ("pick", "typed") and meant.strip().lower() != heard.strip().lower():
+            await self.session.send({"type": "learned", "turn_id": turn.id, "kind": "memory"})
 
     async def say_phrase(self, phrase_id: str) -> None:
         """Speaks a bank phrase and counts the use."""

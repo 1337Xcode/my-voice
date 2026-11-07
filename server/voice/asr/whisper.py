@@ -9,7 +9,8 @@ from pathlib import Path
 import numpy as np
 
 BASE_MODEL = "openai/whisper-large-v3-turbo"
-NUM_BEAMS = 5
+# Beams searched; more than the 5 kept, because beams often differ only in case or punctuation.
+NUM_BEAMS = 8
 NBEST = 5
 # A hypothesis whose text compresses this well is a repetition loop, not speech (OpenAI's own cut-off).
 MAX_COMPRESSION_RATIO = 2.4
@@ -58,6 +59,21 @@ def keep_hypothesis(text: str) -> bool:
     return bool(key) and key not in FILLER_OUTPUTS and compression_ratio(text) <= MAX_COMPRESSION_RATIO
 
 
+def distinct(texts: list[str], scores: list[float], n: int) -> tuple[list[tuple[str, float]], list[str]]:
+    """The n best hypotheses that differ in words (not just case or punctuation) and pass the guards, plus the dropped ones."""
+    kept, dropped, seen = [], [], set()
+    for text, score in sorted(zip(texts, scores), key=lambda item: item[1], reverse=True):
+        key = filler_key(text)
+        if key in seen:
+            continue
+        seen.add(key)
+        if not keep_hypothesis(text):
+            dropped.append(text.strip())
+        elif len(kept) < n:
+            kept.append((text.strip(), score))
+    return kept, dropped
+
+
 class Whisper:
     """The loaded base model and processor, the active adapter, and a lock so one decode runs at a time."""
 
@@ -68,6 +84,7 @@ class Whisper:
         self.lock = threading.Lock()
         self.adapter_path: str | None = None
         self.adapters: dict[str, str] = {}
+        self.last_split_ms: dict[str, int] = {}
         self.no_speech_id = processor.tokenizer.convert_tokens_to_ids("<|nospeech|>")
         self.sot_id = processor.tokenizer.convert_tokens_to_ids("<|startoftranscript|>")
 
@@ -92,21 +109,22 @@ class Whisper:
         self.adapters[path] = name
         return name
 
-    def nbest(self, audio: np.ndarray, n: int = NBEST, stock: bool = False) -> Recognition:
-        """Decodes the 5 best hypotheses (beam 5, temperature 0, English, no timestamps)."""
+    def nbest(self, audio: np.ndarray, n: int = NBEST, stock: bool = False, beams: int = NUM_BEAMS) -> Recognition:
+        """Decodes the n best distinct hypotheses (8 beams, temperature 0, English, no timestamps)."""
         with self.lock:
             started = time.perf_counter()
             features = self._features(audio)
             with self._adapter_context(stock):
-                no_speech = self._no_speech_probability(features)
-                texts, scores = self._beam_search(features, n)
-            kept, dropped = [], []
-            for text, score in zip(texts, scores):
-                (kept if keep_hypothesis(text) else dropped).append((text.strip(), score))
+                encoded = self._encode(features)
+                no_speech = self._no_speech_probability(encoded)
+                checked = time.perf_counter()
+                texts, scores = self._beam_search(features, max(beams, n))
+            self.last_split_ms = {"no_speech": round((checked - started) * 1000), "beams": round((time.perf_counter() - checked) * 1000)}
+            kept, dropped = distinct(texts, scores, n)
             if no_speech > MAX_NO_SPEECH_PROBABILITY:
-                dropped, kept = dropped + kept, []
+                dropped, kept = dropped + [text for text, _ in kept], []
             hypotheses = [Hypothesis(text, round(score, 4)) for text, score in kept]
-            return Recognition(hypotheses, round(no_speech, 4), [t for t, _ in dropped], (time.perf_counter() - started) * 1000)
+            return Recognition(hypotheses, round(no_speech, 4), dropped, (time.perf_counter() - started) * 1000)
 
     def transcribe(self, audio: np.ndarray, stock: bool = False) -> str:
         """The single best text, or "" when the guards drop everything."""
@@ -135,27 +153,33 @@ class Whisper:
             return self.model.disable_adapter()
         return nullcontext()
 
-    def _no_speech_probability(self, features) -> float:
+    def _encode(self, features):
+        """Runs the encoder for the no-speech check (Whisper's generate needs raw features, so it encodes again)."""
+        import torch
+
+        with torch.inference_mode():
+            return self.model.get_encoder()(features)
+
+    def _no_speech_probability(self, encoded) -> float:
         """The probability of <|nospeech|> right after <|startoftranscript|>, as OpenAI's decoder computes it."""
         import torch
 
         with torch.inference_mode():
             decoder_ids = torch.tensor([[self.sot_id]], device=self.device)
-            logits = self.model(input_features=features, decoder_input_ids=decoder_ids).logits
+            logits = self.model(encoder_outputs=encoded, decoder_input_ids=decoder_ids).logits
             return float(torch.softmax(logits[0, -1].float(), dim=-1)[self.no_speech_id])
 
-    def _beam_search(self, features, n: int) -> tuple[list[str], list[float]]:
+    def _beam_search(self, features, beams: int) -> tuple[list[str], list[float]]:
         import torch
 
         with torch.inference_mode():
             out = self.model.generate(
-                input_features=features, num_beams=max(NUM_BEAMS, n), num_return_sequences=n, length_penalty=1.0,
-                do_sample=False, return_dict_in_generate=True, output_scores=True, language="en", task="transcribe",
-                max_new_tokens=128,
+                input_features=features, num_beams=beams, num_return_sequences=beams,
+                length_penalty=1.0, do_sample=False, return_dict_in_generate=True, output_scores=True,
+                language="en", task="transcribe", max_new_tokens=128,
             )
         texts = self.processor.batch_decode(out.sequences, skip_special_tokens=True)
-        scores = out.sequences_scores.float().tolist() if n > 1 or hasattr(out, "sequences_scores") else [0.0] * len(texts)
-        return texts, scores
+        return texts, out.sequences_scores.float().tolist()
 
 
 def load_whisper(device: str = "cuda", cache_dir: str | None = None) -> Whisper:

@@ -27,3 +27,6 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# Live tests call the real third-party APIs; run them with `uv run pytest -m live`.
+markers = ["live: calls a real external API"]
+addopts = "-m 'not live'"
